@@ -419,9 +419,9 @@
  
       </div>
 
-      <button onclick="window.runDailyReport('report')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-white bg-blue-600">Tagesabschluss (Bericht)</button>
+      <button onclick="window.runDailyReport('report')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-white bg-blue-600">Tagesabschluss & Storno (Bericht)</button>
     
-        <button onclick="window.runDailyReport('csv')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-gray-800 bg-gray-300">Tagesabschluss (CSV Export)</button>
+      <button onclick="window.runDailyReport('csv')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-gray-800 bg-gray-300">Tagesabschluss & Storno (CSV Export)</button>
       
       <div id="screen-report-content" class="mt-4 p-4 bg-gray-100 rounded-lg overflow-y-auto flex-grow receipt-print">
         <p class="text-gray-500 text-center">Wählen Sie ein Datum und klicken Sie auf 'Tagesabschluss (Bericht)'.</p>
@@ -506,7 +506,7 @@
  id="btn-finalize">Zahlung abschließen</button>
         
         <button onclick="window.openSettingsModalWithPin()" class="product-btn w-full p-2 bg-gray-600 text-white rounded-lg font-bold">Einstellungen</button>
-        <button onclick="window.openReportModalWithPin()" class="product-btn w-full p-2 bg-blue-600 text-white rounded-lg font-bold">Tagesabschluss</button>
+        <button onclick="window.openReportModalWithPin()" class="product-btn w-full p-2 bg-blue-600 text-white rounded-lg font-bold">Tagesabschluss & Storno</button>
       </div>
     </div>
   </div>
@@ -1672,9 +1672,14 @@
         window.showLoading(false);
     }
     
+    // KORREKTUR 2: FUNKTIONALITÄTS-FIX FÜR REPORT-BUTTONS
     window.runDailyReport = async function(type){
          if (!currentUser) return;
-         window.showLoading(true);
+         window.showLoading(true); // Lade-Screen anzeigen
+        
+        // ZUERST: Sicherstellen, dass die Daten für den Bericht geladen sind
+        await window.loadTransactionHistory();
+        // Die loadTransactionHistory() setzt bereits den Loading-Screen, daher ist der Aufruf oben redundant, aber wir lassen ihn für Konsistenz
 
         const date = document.getElementById('report-date').value;
         const startOfDay = new Date(date);
@@ -1684,6 +1689,7 @@
         endOfDay.setHours(23, 59, 59, 999);
         
         // 1. Transaktionen für den Bericht laden
+        // Nutzen der globalen transactionHistory wäre hier möglich, aber direkter DB-Abruf ist sicherer
         const q = query(transactionsCollectionRef(currentUser.uid), 
             where('timestamp', '>=', startOfDay),
             where('timestamp', '<=', endOfDay),
@@ -1759,7 +1765,7 @@
 
         reportHtml += `
             <div class="separator"></div>
-            <div class="text-center font-extrabold text-base mb-2">TAGESABSCHLUSS (${document.getElementById('report-date').value})</div>
+            <div class="text-center font-extrabold text-base mb-2">TAGESABSCHLUSS & STORNO (${document.getElementById('report-date').value})</div>
             <div class="separator"></div>
             
             <div class="line total-line mb-3"><span>GESAMTEINNAHMEN BRUTTO:</span><span>${grossSales.toFixed(2).replace('.', ',')} €</span></div>
