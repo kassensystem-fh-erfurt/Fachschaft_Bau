@@ -88,7 +88,7 @@
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
       <h1 class="text-3xl font-bold text-center text-red-700 mb-2">Kassensystem</h1>
       <p class="text-sm text-center text-gray-500 mb-6">Bitte anmelden oder registrieren.</p>
-      <form id="login-form" onsubmit="event.preventDefault(); handleLoginSubmit()">
+      <form id="login-form">
         <div class="mb-4">
           <label for="login-email" class="block text-sm font-medium text-gray-700">E-Mail</label>
           <input type="email" id="login-email" required class="mt-1 w-full px-3 py-2 border rounded-lg">
@@ -447,10 +447,10 @@
         authDomain: "kassensystem-85412.firebaseapp.com",
         databaseURL: "https://kassensystem-85412-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "kassensystem-85412",
-        storageBucket: "kassensystem-85412.appspot.com",
-        messagingSenderId: "305116742512",
-        appId: "1:305116742512:web:48a65f97b5d1e2e98fa87f",
-        measurementId: "G-9D3T2J23P8"
+        storageBucket: "kassensystem-85412.firebasestorage.app", // ANWENDER-UPDATE
+        messagingSenderId: "916536785810", // ANWENDER-UPDATE
+        appId: "1:916536785810:web:0d0319ef565af65d279f4b", // ANWENDER-UPDATE
+        measurementId: "G-W5HWYEXWJ5" // ANWENDER-UPDATE
     };
 
     // Initialize Firebase
@@ -531,10 +531,9 @@
         document.getElementById('receipt-column').style.display = show ? 'flex' : 'none';
     }
 
-    // ---------- Auth Logic (unchanged) ----------
+    // ---------- Auth Logic (unchanged, but globalized with window) ----------
 
     window.handleLoginSubmit = async function() {
-        // ... (existing logic) ...
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
         window.showLoading(true);
@@ -548,7 +547,6 @@
     }
 
     window.handleRegisterSubmit = async function() {
-        // ... (existing logic) ...
         const email = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
         window.showLoading(true);
@@ -564,7 +562,6 @@
     }
 
     window.handlePasswordReset = async function() {
-        // ... (existing logic) ...
         const email = document.getElementById('reset-email').value;
         window.showLoading(true);
         try {
@@ -822,8 +819,10 @@
             await loadProductsAndCategories();
             window.showToast('Kategorie hinzugefügt.', 'success');
             window.renderProductModalContent();
-        } // ...
-        // ... (existing logic) ...
+        } catch(err){
+            console.error(err);
+            window.showToast('Fehler beim Hinzufügen der Kategorie.', 'error');
+        } finally { window.showLoading(false); }
     }
 
     window.deleteCategory = async function(id){
@@ -841,8 +840,10 @@
             await loadProductsAndCategories(); 
             window.showToast('Kategorie und Produkte gelöscht.', 'success');
             window.renderProductModalContent();
-        } // ...
-        // ... (existing logic) ...
+        } catch(err){
+            console.error(err);
+            window.showToast('Fehler beim Löschen der Kategorie.', 'error');
+        } finally { window.showLoading(false); }
     }
 
     // MODIFIZIERT: addProduct (für Bestand)
@@ -891,8 +892,10 @@
             await loadProductsAndCategories(); 
             window.showToast('Produkt gelöscht.', 'success');
             window.renderProductModalContent();
-        } // ...
-        // ... (existing logic) ...
+        } catch(err){
+            console.error(err);
+            window.showToast('Fehler beim Löschen des Produkts.', 'error');
+        } finally { window.showLoading(false); }
     }
 
     // MODIFIZIERT: saveProductPrice (für Bestand & TaxRate)
@@ -961,7 +964,7 @@
                     <option value="7.0" ${product.taxRate == 7.0 ? 'selected' : ''}>7%</option>
                 </select>
                 <button onclick="window.saveProductPrice('${product.id}')" class="col-span-2 p-1 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600">Speichern</button>
-                <button onclick="window.deleteProduct('${product.id}')" class="col-span-1 p-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600">X</button>
+                <button onclick="window.deleteProduct('${product.id}')" class="col-span-2 p-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600">Löschen</button>
             `;
             prodListContainer.appendChild(prodDiv);
         });
@@ -1289,6 +1292,74 @@
     }
 
     // ... (existing cash input functions) ...
+    window.setPaymentMethod = function(method) {
+        cashPaymentMethod = method;
+        document.getElementById('cash-payment-area').style.display = method === 'BAR' ? 'block' : 'none';
+        document.getElementById('btn-bar-indicator').style.display = method === 'BAR' ? 'inline-block' : 'none';
+        document.getElementById('cash-finalize-buttons').style.display = method === 'BAR' ? 'block' : 'none';
+        document.getElementById('card-finalize-buttons').style.display = method === 'KARTE' ? 'block' : 'none';
+    };
+
+    window.handleCashInput = function(input) {
+        // ... (implementiert) ...
+        const maxDigits = 10;
+        let currentStr = document.getElementById('cash-received-display').innerText.replace(/[\.,]/g, '');
+        
+        if (input === 'clear') {
+            currentStr = '0';
+        } else if (input === 'dot') {
+            input = '0'; 
+        } 
+        
+        if(input !== 'clear') {
+            if (currentStr === '0') {
+                currentStr = input;
+            } else if (currentStr.length < maxDigits) {
+                currentStr += input;
+            }
+        }
+        
+        while(currentStr.length < 3) {
+            currentStr = '0' + currentStr;
+        }
+
+        let formattedStr = currentStr.slice(0, -2) + '.' + currentStr.slice(-2);
+
+        if(formattedStr.startsWith('0') && formattedStr.length > 4 && formattedStr.charAt(1) !== '.') {
+            formattedStr = formattedStr.substring(1);
+        }
+        
+        cashReceivedInput = formattedStr;
+        window.updateChangeDisplay();
+    };
+
+    window.updateChangeDisplay = function() {
+        const total = totalBrutto;
+        const received = parseFloat(cashReceivedInput) || 0;
+        const change = received - total;
+
+        document.getElementById('cash-received-display').innerText = received.toFixed(2).replace('.', ',');
+        document.getElementById('change-display').innerText = change >= 0 ? change.toFixed(2).replace('.', ',') + ' €' : '0,00 €';
+
+        const buttonsToEnable = change >= 0 && change.toFixed(2) >= 0;
+        document.getElementById('btn-cash-none').disabled = !buttonsToEnable;
+        document.getElementById('btn-cash-standard').disabled = !buttonsToEnable;
+        document.getElementById('btn-cash-bewirtung').disabled = !buttonsToEnable;
+    };
+
+    window.setCashExact = function() {
+        if (totalBrutto > 0) {
+            cashReceivedInput = totalBrutto.toFixed(2);
+            window.updateChangeDisplay();
+        }
+    };
+
+    window.addCashShortcut = function(amount) {
+        let received = parseFloat(cashReceivedInput) || 0;
+        received += amount;
+        cashReceivedInput = received.toFixed(2);
+        window.updateChangeDisplay();
+    };
 
     // MODIFIZIERT: handleFinalizeAction (STOCK REDUCTION & CASHBOX UPDATE)
     window.handleFinalizeAction = async function(method, receiptType){
@@ -1444,6 +1515,70 @@
     }
     
     // ... (Existing report/transaction history functions) ...
+
+    window.loadTransactionHistory = async function(){
+        const dateInput = document.getElementById('report-date').value;
+        if(!dateInput) { return; }
+
+        const selectedDate = new Date(dateInput);
+        selectedDate.setHours(0, 0, 0, 0); 
+        const nextDay = new Date(selectedDate);
+        nextDay.setDate(selectedDate.getDate() + 1);
+
+        const startOfDay = Timestamp.fromDate(selectedDate);
+        const endOfDay = Timestamp.fromDate(nextDay);
+        
+        const q = query(
+            transactionsCollectionRef(currentUser.uid),
+            where('timestamp', '>=', startOfDay),
+            where('timestamp', '<', endOfDay),
+            orderBy('timestamp', 'desc')
+        );
+        
+        window.showLoading(true);
+        try {
+            const querySnapshot = await getDocs(q);
+            transactionHistory = querySnapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data(), 
+                timestamp: doc.data().timestamp.toDate().toLocaleString() // Timestamp zu lesbarem String konvertieren
+            }));
+            
+            const listContainer = document.getElementById('transaction-list');
+            listContainer.innerHTML = '';
+
+            if (transactionHistory.length === 0) {
+                listContainer.innerHTML = '<p class="text-gray-500 text-center p-4">Keine Transaktionen für diesen Tag gefunden.</p>';
+                return;
+            }
+
+            transactionHistory.forEach((t, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `p-2 border rounded-lg mb-2 flex justify-between items-center ${t.isCancelled ? 'bg-red-100' : 'bg-green-50'}`;
+                
+                const statusText = t.isCancelled ? 'STORNIERT' : 'ABGESCHLOSSEN';
+                const buttonHtml = t.isCancelled 
+                    ? `<span class="text-red-700 font-bold">${statusText}</span>`
+                    : `<button onclick="window.handleReversal('${t.id}', ${index})" class="p-1 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700">Stornieren</button>`;
+
+                itemDiv.innerHTML = `
+                    <div class="flex flex-col text-sm">
+                        <span class="font-bold">${t.totalBrutto.toFixed(2).replace('.', ',')} € (${t.paymentMethod})</span>
+                        <span class="text-xs text-gray-500">${t.timestamp}</span>
+                    </div>
+                    ${buttonHtml}
+                `;
+                listContainer.appendChild(itemDiv);
+            });
+
+        } catch (err) {
+            console.error("Error loading history:", err);
+            window.showToast('Fehler beim Laden der Transaktionshistorie.', 'error');
+        } finally {
+            window.showLoading(false);
+        }
+    }
+
 
     // MODIFIZIERT: handleReversal (für STOCK & CASH UPDATE)
     window.handleReversal = async function(transactionId, index){
@@ -1822,12 +1957,38 @@
     window.openReportModal = function(){
         document.getElementById('report-modal').style.display='flex';
         window.toggleReceiptColumn(false);
+        // Zusätzlich die Transaktionshistorie für das aktuelle Datum laden
+        window.loadTransactionHistory();
     }
 
-    // ---------- Startup (unchanged) ----------
+    // ---------- Startup (NEU: BINDET LOGIN HANDLER PER JS) ----------
     document.addEventListener('DOMContentLoaded', () => {
         window.setReportDateToday();
         window.updateAppView('login'); 
+        
+        // **FIX FÜR INLINE HANDLER PROBLEM**
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                window.handleLoginSubmit();
+            });
+        }
+        const registerForm = document.getElementById('register-form');
+        if(registerForm) {
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                window.handleRegisterSubmit();
+            });
+        }
+        const resetForm = document.getElementById('reset-form');
+        if(resetForm) {
+            resetForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                window.handlePasswordReset();
+            });
+        }
+        
     });
 
     window.setReportDateToday = function(){
