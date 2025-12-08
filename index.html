@@ -6,53 +6,69 @@
   <title>Kassensystem FH-Erfurt</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
+    body { font-family: 'Inter', sans-serif;
+ background-color: #f7f7f7; }
     #receipt-content-interactive { overflow-y: auto; max-height: 40vh; }
-    .product-btn:active { transform: scale(0.98); }
+    .product-btn:active { transform: scale(0.98);
+ }
     .numpad-btn { height: 50px; display:flex; justify-content:center; align-items:center; }
-    #async-loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); z-index:100; display:none; justify-content:center; align-items:center; }
-    .spinner { border: 4px solid rgba(0,0,0,0.1); border-top: 4px solid #b91c1c; border-radius: 50%; width:40px; height:40px; animation: spin 1s linear infinite; }
+    #async-loading-overlay { position: fixed; top:0;
+ left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); z-index:100; display:none; justify-content:center; align-items:center; }
+    .spinner { border: 4px solid rgba(0,0,0,0.1);
+ border-top: 4px solid #b91c1c; border-radius: 50%; width:40px; height:40px; animation: spin 1s linear infinite;
+ }
     @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-    #toast-container { position: fixed; top:1rem; right:1rem; z-index:1000; pointer-events:none; }
-    .toast { padding: .75rem 1rem; border-radius: .5rem; color: #fff; margin-bottom:.5rem; opacity:0; transition: opacity .25s ease; }
+    #toast-container { position: fixed; top:1rem; right:1rem; z-index:1000;
+ pointer-events:none; }
+    .toast { padding: .75rem 1rem; border-radius: .5rem; color: #fff; margin-bottom:.5rem; opacity:0; transition: opacity .25s ease;
+ }
     .toast-success { background: #16a34a; } .toast-error { background:#dc2626 } .toast-info { background:#2563eb }
     
     /* Druck-Container standardmäßig unsichtbar */
-    #print-receipt-container { display: none; visibility: hidden; } 
-    .receipt-print { font-family: 'Consolas', 'Courier New', monospace; }
+    #print-receipt-container { display: none;
+ visibility: hidden; } 
+    .receipt-print { font-family: 'Consolas', 'Courier New', monospace;
+ }
 
     /* **KORRIGIERTE DRUCK-STILE FÜR BONDDRUCKER (80mm)** */
     @media print {
-      body * { visibility: hidden !important; }
+      body * { visibility: hidden !important;
+ }
       
       /* NEU: Wichtig, um den Druckbereich zu isolieren */
       #print-receipt-container { 
-        visibility: visible !important; 
-        display: block !important; 
+        visibility: visible !important;
+ display: block !important; 
         position: absolute !important; 
         left: 0 !important; 
         top: 0 !important; 
-        width: 80mm !important; 
-        font-family: 'Consolas', 'Courier New', monospace !important; 
+        width: 80mm !important; /* GLEICHE BREITE FÜR BON UND BEWIRTUNGSBELEG */
+ font-family: 'Consolas', 'Courier New', monospace !important; 
         font-size: 12px !important; /* Angepasst auf 12px für bessere Lesbarkeit und Zeilenbreite auf Bondruckern */
-        color: #000 !important; 
-        padding: 2px !important; /* Reduziertes Padding für maximale Druckfläche */
+        color: #000 !important;
+ padding: 2px !important; /* Reduziertes Padding für maximale Druckfläche */
         margin: 0 !important;
-        line-height: 1.2 !important; /* Reduzierter Zeilenabstand */
+ line-height: 1.2 !important; /* Reduzierter Zeilenabstand */
       }
       #print-receipt-container * { 
-        visibility: visible !important; 
-      }
+        visibility: visible !important;
+ }
       
       /* Print-Layout Regeln */
-      .receipt-print .line { display:flex; justify-content:space-between; margin-bottom: 2px; }
-      .receipt-print .item-name { width:70%; overflow:hidden; white-space:normal; } 
-      .receipt-print .item-price { width:30%; text-align:right; font-weight:bold; }
-      .receipt-print .separator { border-top: 1px dashed #000; margin: 4px 0; }
-      .receipt-print .total-line { font-size: 14px !important; font-weight: bold; } /* Angepasst proportional zur neuen Basis von 12px */
+      .receipt-print .line { display:flex;
+ justify-content:space-between; margin-bottom: 2px; }
+      .receipt-print .item-name { width:70%; overflow:hidden; white-space:normal;
+ } 
+      .receipt-print .item-price { width:30%; text-align:right; font-weight:bold;
+ }
+      .receipt-print .separator { border-top: 1px dashed #000; margin: 4px 0;
+ }
+      .receipt-print .total-line { font-size: 14px !important; font-weight: bold;
+ } /* Angepasst proportional zur neuen Basis von 12px */
       
       /* Stil für die Ausfüll-Linien (Bewirtungsbeleg) */
-      .fill-line { border-bottom: 1px solid #000; height: 1.5em; margin-top: 0.5em; }
+      .fill-line { border-bottom: 1px solid #000;
+ height: 1.5em; margin-top: 0.5em; }
     }
   </style>
 </head>
@@ -61,14 +77,16 @@
   <div id="toast-container"></div>
   <div id="async-loading-overlay"><div class="spinner"></div></div>
 
-  <div id="pin-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-90 z-[999] flex items-center justify-center p-4">
+  <div id="pin-modal" style="display:none;"
+ class="fixed inset-0 bg-black bg-opacity-90 z-[999] flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
       <h2 id="pin-modal-title" class="text-2xl font-bold text-center text-red-700 mb-4">Sicherheitscode eingeben</h2>
       <p class="text-sm text-center text-gray-500 mb-4">Bitte geben Sie den Code für die Verwaltung ein.</p>
       <div id="pin-input-display" class="w-full h-10 flex items-center justify-center text-2xl font-extrabold text-gray-800 bg-gray-100 rounded-lg mb-4 tracking-widest"></div>
       <div id="pin-numpad-container" class="grid grid-cols-3 gap-2">
         <button onclick="handlePinInput('7')" class="numpad-btn bg-gray-200">7</button>
-        <button onclick="handlePinInput('8')" class="numpad-btn bg-gray-200">8</button>
+        <button onclick="handlePinInput('8')" class="numpad-btn 
+ bg-gray-200">8</button>
         <button onclick="handlePinInput('9')" class="numpad-btn bg-gray-200">9</button>
         <button onclick="handlePinInput('4')" class="numpad-btn bg-gray-200">4</button>
         <button onclick="handlePinInput('5')" class="numpad-btn bg-gray-200">5</button>
@@ -77,14 +95,16 @@
         <button onclick="handlePinInput('2')" class="numpad-btn bg-gray-200">2</button>
         <button onclick="handlePinInput('3')" class="numpad-btn bg-gray-200">3</button>
         <button onclick="handlePinInput('clear')" class="numpad-btn bg-red-500 text-white">C</button>
-        <button onclick="handlePinInput('0')" class="numpad-btn bg-gray-200">0</button>
+        <button onclick="handlePinInput('0')" class="numpad-btn 
+ bg-gray-200">0</button>
         <button onclick="handlePinInput('enter')" class="numpad-btn bg-green-500 text-white" id="pin-enter-btn">OK</button>
       </div>
       <button onclick="closeModal('pin-modal')" class="mt-4 w-full p-1 text-sm text-gray-500">Abbrechen</button>
     </div>
   </div>
 
-  <div id="login-modal" style="display:flex;" class="fixed inset-0 bg-black bg-opacity-90 z-[999] flex items-center justify-center p-4">
+  <div id="login-modal" style="display:flex;"
+ class="fixed inset-0 bg-black bg-opacity-90 z-[999] flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
       <h1 class="text-3xl font-bold text-center text-red-700 mb-2">Kassensystem</h1>
       <p class="text-sm text-center text-gray-500 mb-6">Bitte anmelden oder registrieren.</p>
@@ -92,7 +112,8 @@
         <div class="mb-4">
           <label for="login-email" class="block text-sm font-medium text-gray-700">E-Mail</label>
           <input type="email" id="login-email" required class="mt-1 w-full px-3 py-2 border rounded-lg">
-        </div>
+        
+ </div>
         <div class="mb-6">
           <label for="login-password" class="block text-sm font-medium text-gray-700">Passwort</label>
           <input type="password" id="login-password" required class="mt-1 w-full px-3 py-2 border rounded-lg">
@@ -101,12 +122,14 @@
       </form>
       <div class="mt-4 text-center">
         <button onclick="openRegistrationModal()" class="text-sm text-indigo-600">Registrieren</button>
-        <button onclick="openForgotPasswordModal()" class="ml-2 text-sm text-red-600">Passwort vergessen?</button>
+        <button 
+ onclick="openForgotPasswordModal()" class="ml-2 text-sm text-red-600">Passwort vergessen?</button>
       </div>
     </div>
   </div>
 
-  <div id="registration-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-90 z-[999] flex items-center justify-center p-4">
+  <div id="registration-modal" style="display:none;"
+ class="fixed inset-0 bg-black bg-opacity-90 z-[999] flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
       <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Konto erstellen</h2>
       <form id="register-form" onsubmit="event.preventDefault(); handleRegisterSubmit()">
@@ -115,12 +138,14 @@
           <input type="email" id="register-email" required class="mt-1 w-full px-3 py-2 border rounded-lg">
         </div>
         <div class="mb-6">
+ 
           <label for="register-password" class="block text-sm font-medium text-gray-700">Passwort (mindestens 8 Zeichen und ein Sonderzeichen)</label>
           <input type="password" id="register-password" required minlength="6" class="mt-1 w-full px-3 py-2 border rounded-lg">
         </div>
         <button type="submit" class="w-full p-2 rounded-lg font-bold text-white bg-green-600">Registrieren</button>
       </form>
-      <button onclick="closeModal('registration-modal'); openLoginModal();" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück</button>
+      <button onclick="closeModal('registration-modal');
+ openLoginModal();" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück</button>
     </div>
   </div>
 
@@ -128,14 +153,16 @@
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
       <h2 class="text-2xl font-bold text-center text-red-700 mb-4">Passwort zurücksetzen</h2>
       <p class="text-sm text-center text-gray-500 mb-4">Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen Ihres Passworts zu erhalten.</p>
-      <form id="reset-form" onsubmit="event.preventDefault(); handlePasswordReset()">
+      <form id="reset-form" onsubmit="event.preventDefault();
+ handlePasswordReset()">
         <div class="mb-6">
           <label for="reset-email" class="block text-sm font-medium text-gray-700">E-Mail</label>
           <input type="email" id="reset-email" required class="mt-1 w-full px-3 py-2 border rounded-lg">
         </div>
         <button type="submit" class="w-full p-2 rounded-lg font-bold text-white bg-red-600">Link senden</button>
       </form>
-      <button onclick="closeModal('forgot-password-modal'); openLoginModal();" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück</button>
+      <button onclick="closeModal('forgot-password-modal');
+ openLoginModal();" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück</button>
     </div>
   </div>
 
@@ -146,19 +173,22 @@
         <div class="mb-4 border-b pb-3">
           <h3 class="text-lg font-semibold mb-2">Neue Kategorie/Produkt</h3>
           <div class="flex space-x-2 mb-2">
+       
             <input type="text" id="new-category-name" placeholder="Kategorie" class="flex-grow p-2 border rounded-lg">
             <button onclick="window.addCategory()" class="p-2 bg-indigo-500 text-white rounded-lg">Kategorie</button>
           </div>
           
           <div class="grid grid-cols-4 gap-2 items-end mb-2"> 
             <input type="text" id="new-product-name" placeholder="Produktname" class="col-span-2 p-2 border rounded-lg">
-            <input type="number" id="new-product-price" placeholder="Preis (€)" step="0.01" class="p-2 border rounded-lg">
+            <input type="number" id="new-product-price" placeholder="Preis 
+ (€)" step="0.01" class="p-2 border rounded-lg">
             <input type="number" id="new-product-stock" placeholder="Bestand" min="0" value="1" class="p-2 border rounded-lg">
           </div>
           <div class="grid grid-cols-2 gap-2 items-end mb-2">
             <select id="new-product-category" class="p-2 border rounded-lg"><option value="">Kategorie</option></select>
             <select type="number" id="new-product-tax-rate" class="p-2 border rounded-lg">
-                <option value="19.0">19% MwSt.</option>
+                <option 
+ value="19.0">19% MwSt.</option>
                 <option value="7.0">7% MwSt.</option>
             </select>
           </div>
@@ -168,7 +198,8 @@
 
         <h3 class="text-lg font-semibold mb-2">Kategorien</h3>
         <div id="category-list" class="space-y-2 mb-4"></div>
-        <h3 class="text-lg font-semibold mb-2">Produkte (Preis bearbeiten)</h3>
+        <h3 class="text-lg font-semibold 
+ mb-2">Produkte (Preis bearbeiten)</h3>
         <div id="product-list" class="space-y-2"></div>
       </div>
       <div class="mt-6 text-right"><button onclick="closeModal('product-modal')" class="p-2 bg-gray-300 rounded-lg">Schließen</button></div>
@@ -180,6 +211,7 @@
       <h2 class="text-2xl font-bold mb-4 text-green-700 text-center">Zahlung abschließen</h2>
       <div class="mb-3 p-2 border-2 border-green-500 rounded-lg bg-green-50">
         <p class="text-xs font-bold text-gray-700">Gesamtbetrag:</p>
+      
         <div id="finalize-total" class="text-3xl font-extrabold text-right text-green-700">0.00 €</div>
       </div>
 
@@ -190,7 +222,8 @@
       <div id="cash-payment-area" class="mt-4 p-3 border rounded-lg bg-gray-50">
         <h3 class="text-lg font-semibold mb-2 flex justify-between items-center text-blue-700">
           BAR Zahlung (Rückgeld)
-          <span id="btn-bar-indicator" class="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">AKTIV</span>
+          <span id="btn-bar-indicator" class="text-xs bg-blue-500 text-white 
+ px-2 py-1 rounded-full">AKTIV</span>
         </h3>
 
         <label class="block text-sm font-medium text-gray-700 mb-1">Erhaltener Betrag</label>
@@ -201,6 +234,7 @@
           <span id="change-display" class="text-2xl font-extrabold text-green-700">0,00 €</span>
         </div>
 
+    
         <div id="cash-numpad-container" class="mt-4 grid grid-cols-3 gap-2">
           <button onclick="handleCashInput('7')" class="numpad-btn bg-gray-200">7</button>
           <button onclick="handleCashInput('8')" class="numpad-btn bg-gray-200">8</button>
@@ -208,7 +242,8 @@
           <button onclick="handleCashInput('4')" class="numpad-btn bg-gray-200">4</button>
           <button onclick="handleCashInput('5')" class="numpad-btn bg-gray-200">5</button>
           <button onclick="handleCashInput('6')" class="numpad-btn bg-gray-200">6</button>
-          <button onclick="handleCashInput('1')" class="numpad-btn bg-gray-200">1</button>
+          <button onclick="handleCashInput('1')" class="numpad-btn 
+ bg-gray-200">1</button>
           <button onclick="handleCashInput('2')" class="numpad-btn bg-gray-200">2</button>
           <button onclick="handleCashInput('3')" class="numpad-btn bg-gray-200">3</button>
           <button onclick="handleCashInput('clear')" class="numpad-btn bg-red-500 text-white">C</button>
@@ -217,7 +252,8 @@
         </div>
 
         <div class="mt-3 grid grid-cols-3 gap-2">
-          <button onclick="setCashExact()" class="product-btn h-10 bg-blue-500 text-white rounded-xl">Exakt</button>
+          <button onclick="setCashExact()" class="product-btn h-10 
+ bg-blue-500 text-white rounded-xl">Exakt</button>
           <button onclick="addCashShortcut(5)" class="product-btn h-10 bg-blue-500 text-white rounded-xl">+5 €</button>
           <button onclick="addCashShortcut(10)" class="product-btn h-10 bg-blue-500 text-white rounded-xl">+10 €</button>
         </div>
@@ -227,6 +263,7 @@
         <div id="cash-finalize-buttons" style="display:block;">
           <p class="text-sm text-center text-gray-500 mb-2 font-semibold">Transaktion abschließen:</p>
           <div class="grid grid-cols-3 gap-2">
+   
             <button onclick="handleFinalizeAction('BAR','none')" disabled id="btn-cash-none" class="p-3 rounded-xl font-extrabold text-white bg-red-400">Ohne Beleg</button>
             <button onclick="handleFinalizeAction('BAR','standard')" disabled id="btn-cash-standard" class="p-3 rounded-xl font-extrabold text-white bg-green-400">Standard Bon</button>
             <button onclick="handleFinalizeAction('BAR','bewirtung')" disabled id="btn-cash-bewirtung" class="p-3 rounded-xl font-extrabold text-white bg-red-600">Bewirtungsbeleg</button>
@@ -234,7 +271,8 @@
         </div>
 
         <div id="card-finalize-buttons" style="display:none;">
-          <p class="text-lg font-bold text-center text-indigo-700 mb-3">Belegoptionen:</p>
+          <p class="text-lg font-bold 
+ text-center text-indigo-700 mb-3">Belegoptionen:</p>
           <div class="grid grid-cols-3 gap-2">
             <button onclick="handleFinalizeAction('KARTE','none')" class="p-3 rounded-xl font-extrabold text-white bg-gray-500">NEIN</button>
             <button onclick="handleFinalizeAction('KARTE','standard')" class="p-3 rounded-xl font-extrabold text-white bg-green-600">Standard Bon</button>
@@ -243,7 +281,8 @@
         </div>
       </div>
 
-      <div class="mt-4 text-right"><button onclick="closeModal('finalize-modal')" class="p-2 bg-gray-300 rounded-lg">Abbrechen</button></div>
+      
+        <div class="mt-4 text-right"><button onclick="closeModal('finalize-modal')" class="p-2 bg-gray-300 rounded-lg">Abbrechen</button></div>
     </div>
   </div>
 
@@ -255,7 +294,8 @@
         <p class="text-sm font-bold text-gray-700">Aktueller Kassenstand (System):</p>
         <div id="cash-balance-display" class="text-3xl font-extrabold text-right text-indigo-700">0.00 €</div>
       </div>
-      
+   
+   
       <div id="cash-man-input-area" class="mt-4 p-3 border rounded-lg bg-gray-50">
         <label class="block text-sm font-medium text-gray-700 mb-1">Betrag (€)</label>
         <div id="cash-man-received-display" class="w-full h-10 flex items-center justify-end px-3 py-2 border rounded-xl text-xl font-extrabold text-gray-800 bg-white">0,00</div>
@@ -263,7 +303,8 @@
         <div id="cash-man-numpad-container" class="mt-4 grid grid-cols-3 gap-2">
           <button onclick="handleCashManInput('7')" class="numpad-btn bg-gray-200">7</button>
           <button onclick="handleCashManInput('8')" class="numpad-btn bg-gray-200">8</button>
-          <button onclick="handleCashManInput('9')" class="numpad-btn bg-gray-200">9</button>
+          
+            <button onclick="handleCashManInput('9')" class="numpad-btn bg-gray-200">9</button>
           <button onclick="handleCashManInput('4')" class="numpad-btn bg-gray-200">4</button>
           <button onclick="handleCashManInput('5')" class="numpad-btn bg-gray-200">5</button>
           <button onclick="handleCashManInput('6')" class="numpad-btn bg-gray-200">6</button>
@@ -271,6 +312,7 @@
           <button onclick="handleCashManInput('2')" class="numpad-btn bg-gray-200">2</button>
           <button onclick="handleCashManInput('3')" class="numpad-btn bg-gray-200">3</button>
           <button onclick="handleCashManInput('clear')" class="numpad-btn bg-red-500 text-white">C</button>
+     
           <button onclick="handleCashManInput('0')" class="numpad-btn bg-gray-200">0</button>
           <button onclick="handleCashManInput('dot')" class="numpad-btn bg-gray-200">,</button>
         </div>
@@ -281,7 +323,8 @@
         <button onclick="window.handleCashManagement('ENTNAHME')" class="p-3 rounded-lg font-bold text-white bg-red-600">Geld Entnahme (-)</button>
       </div>
       
-      <div class="mt-4 text-right"><button onclick="closeModal('cash-management-modal')" class="p-2 bg-gray-300 rounded-lg">Schließen</button></div>
+     
+        <div class="mt-4 text-right"><button onclick="closeModal('cash-management-modal')" class="p-2 bg-gray-300 rounded-lg">Schließen</button></div>
     </div>
   </div>
 
@@ -290,9 +333,14 @@
       <h2 class="text-2xl font-bold text-center text-red-700 mb-6">Einstellungen & Verwaltung</h2>
       
       <div id="settings-menu" class="space-y-4">
-        <button onclick="window.openCashManagementModal(); closeModal('settings-modal')" class="w-full p-3 rounded-lg font-bold text-white bg-green-600 hover:bg-green-700">Kassenverwaltung (Einlage/Entnahme)</button>
+        <button onclick="window.openCashManagementModal();
+ closeModal('settings-modal')" class="w-full p-3 rounded-lg font-bold text-white bg-green-600 hover:bg-green-700">Kassenverwaltung (Einlage/Entnahme)</button>
+        
+        <button onclick="window.openSecurityCodeSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-orange-600 hover:bg-orange-700">Sicherheitscode verwalten</button>
+
         <button onclick="window.openGeneralSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700">Kassenbon-Einstellungen</button>
-        <button onclick="window.openProductModal(); closeModal('settings-modal')" class="w-full p-3 rounded-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700">Produkt- & Kategorie-Verwaltung</button>
+        <button onclick="window.openProductModal();
+ closeModal('settings-modal')" class="w-full p-3 rounded-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700">Produkt- & Kategorie-Verwaltung</button>
       </div>
 
       <div id="general-settings-form-container" style="display:none;">
@@ -301,6 +349,7 @@
           <div class="mb-4">
             <label for="company-name" class="block text-sm font-medium text-gray-700">Firmenname</label>
             <input type="text" id="company-name" class="mt-1 w-full p-2 border rounded-lg">
+       
           </div>
           <div class="mb-4">
             <label for="address" class="block text-sm font-medium text-gray-700">Adresse (für Beleg)</label>
@@ -308,30 +357,38 @@
           </div>
           <div class="mb-4">
             <label for="tax-id" class="block text-sm font-medium text-gray-700">Steuernummer</label>
+          
             <input type="text" id="tax-id" class="mt-1 w-full p-2 border rounded-lg">
           </div>
           <div class="mb-6">
             <label for="tax-rate" class="block text-sm font-medium text-gray-700">Steuersatz Fallback (%)</label>
             <input type="number" id="tax-rate" step="0.1" class="mt-1 w-full p-2 border rounded-lg">
             <p class="text-xs text-gray-500 mt-1">Dieser Satz wird nur verwendet, wenn einem Produkt kein Satz zugewiesen ist.</p>
-          </div>
-          <div class="mb-6 border-t pt-4 mt-4">
-            <label for="reversal-code" class="block text-sm font-medium text-gray-700">Sicherheitscode (4-stellig für Storno/Einstellungen)</label>
-            <input type="text" id="reversal-code" maxlength="4" class="mt-1 w-full p-2 border rounded-lg" placeholder="4-stelliger Code">
-            <p class="text-xs text-gray-500 mt-1">Lassen Sie dieses Feld leer, um den Code zu deaktivieren.</p>
+     
           </div>
           <button type="button" onclick="window.saveSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-red-600">Speichern</button>
         </form>
         <button onclick="window.showSettingsMenu()" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück zum Menü</button>
       </div>
       
+      <div id="security-code-settings-container" style="display:none;">
+        <h3 class="text-xl font-bold text-red-700 mb-4 border-b pb-2">Sicherheitscode verwalten</h3>
+        <p class="text-sm text-gray-500 mb-4">Legen Sie einen 4-stelligen Code fest, um Zugang zu Storno und Einstellungen zu erhalten. Lassen Sie das Feld leer, um die Code-Abfrage zu deaktivieren.</p>
+        <div class="mb-6">
+          <label for="reversal-code-separate" class="block text-sm font-medium text-gray-700">Sicherheitscode (4-stellig)</label>
+          <input type="text" id="reversal-code-separate" maxlength="4" class="mt-1 w-full p-2 border rounded-lg" placeholder="4-stelliger Code">
+        </div>
+        <button type="button" onclick="window.saveSecurityCode()" class="w-full p-3 rounded-lg font-bold text-white bg-red-600">Code speichern</button>
+        <button onclick="window.showSettingsMenu()" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück zum Menü</button>
+      </div>
+
       <button onclick="closeModal('settings-modal')" id="btn-close-settings-modal" class="mt-6 w-full p-2 text-sm text-gray-500 border rounded-lg hover:bg-gray-100">Schließen</button>
     </div>
   </div>
-
   <div id="report-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-70 z-[999] flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-      <h2 class="text-2xl font-bold text-center text-blue-700 mb-4">Tagesabschluss & Transaktionen</h2>
+   
+    <h2 class="text-2xl font-bold text-center text-blue-700 mb-4">Tagesabschluss & Transaktionen</h2>
       
       <div class="flex items-center space-x-2 mb-4 bg-blue-50 p-3 rounded-lg">
         <label for="report-date" class="text-sm font-bold text-blue-700 whitespace-nowrap">Bericht für Tag:</label>
@@ -340,7 +397,8 @@
       </div>
 
       <button onclick="window.runDailyReport('report')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-white bg-blue-600">Tagesabschluss (Bericht)</button>
-      <button onclick="window.runDailyReport('csv')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-gray-800 bg-gray-300">Tagesabschluss (CSV Export)</button>
+    
+        <button onclick="window.runDailyReport('csv')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-gray-800 bg-gray-300">Tagesabschluss (CSV Export)</button>
       
       <div id="screen-report-content" class="mt-4 p-4 bg-gray-100 rounded-lg overflow-y-auto flex-grow receipt-print">
         <p class="text-gray-500 text-center">Wählen Sie ein Datum und klicken Sie auf 'Tagesabschluss (Bericht)'.</p>
@@ -349,7 +407,8 @@
       <h3 class="text-xl font-bold text-gray-700 mt-6 mb-2">Transaktionshistorie (Storno)</h3>
       <div id="transaction-list-container" class="border p-2 rounded-lg bg-white overflow-y-auto max-h-48">
         <div id="transaction-list">
-          <p class="text-gray-500 text-center">Lade Transaktionen...</p>
+        
+            <p class="text-gray-500 text-center">Lade Transaktionen...</p>
         </div>
       </div>
 
@@ -365,6 +424,7 @@
       <div class="flex space-x-2 p-2 bg-white rounded-xl shadow-lg">
         <div class="flex-grow">
           <div id="category-tabs" class="flex space-x-1 overflow-x-auto pb-1">
+ 
             </div>
         </div>
         <button onclick="window.handleLogout()" class="product-btn p-2 bg-red-500 text-white rounded-lg whitespace-nowrap">Logout</button>
@@ -376,14 +436,16 @@
 
       <div class="p-4 bg-white rounded-xl shadow-lg grid grid-cols-4 gap-4">
         <div class="col-span-1">
-          <span class="text-sm font-bold text-gray-600 block mb-1">Aktuelle Menge:</span>
+    
+            <span class="text-sm font-bold text-gray-600 block mb-1">Aktuelle Menge:</span>
           <div id="quantity-display" class="w-full h-10 flex items-center justify-center text-xl font-extrabold text-red-600 bg-red-100 rounded-xl">1</div>
         </div>
         <div id="main-numpad-container" class="grid grid-cols-3 gap-2 col-span-3">
           <button onclick="window.handleQuantityInput('7')" class="numpad-btn bg-gray-200">7</button>
           <button onclick="window.handleQuantityInput('8')" class="numpad-btn bg-gray-200">8</button>
           <button onclick="window.handleQuantityInput('9')" class="numpad-btn bg-gray-200">9</button>
-          <button onclick="window.handleQuantityInput('4')" class="numpad-btn bg-gray-200">4</button>
+       
+            <button onclick="window.handleQuantityInput('4')" class="numpad-btn bg-gray-200">4</button>
           <button onclick="window.handleQuantityInput('5')" class="numpad-btn bg-gray-200">5</button>
           <button onclick="window.handleQuantityInput('6')" class="numpad-btn bg-gray-200">6</button>
           <button onclick="window.handleQuantityInput('1')" class="numpad-btn bg-gray-200">1</button>
@@ -391,7 +453,8 @@
           <button onclick="window.handleQuantityInput('3')" class="numpad-btn bg-gray-200">3</button>
           <button onclick="window.handleQuantityInput('clear')" class="numpad-btn bg-red-500 text-white">C</button>
           <button onclick="window.handleQuantityInput('0')" class="numpad-btn bg-gray-200">0</button>
-          <button onclick="window.handleQuantityInput('+')" class="numpad-btn bg-green-500 text-white">+</button>
+  
+            <button onclick="window.handleQuantityInput('+')" class="numpad-btn bg-green-500 text-white">+</button>
         </div>
       </div>
 
@@ -402,7 +465,8 @@
       <div class="bg-white p-4 rounded-xl shadow-lg flex-grow flex flex-col">
         <h2 class="text-lg font-bold text-red-700 mb-2 border-b pb-1">Aktueller Bon</h2>
         <div id="receipt-content-interactive" class="flex-grow overflow-y-auto mb-2 space-y-1">
-          <p class="text-gray-500 text-center p-4">Es wurden noch keine Artikel gebucht.</p>
+          <p class="text-gray-500 text-center p-4">Es 
+ wurden noch keine Artikel gebucht.</p>
         </div>
         <div class="border-t pt-2 flex justify-between items-center">
           <button onclick="window.clearBestellung()" class="text-red-500 text-sm font-semibold">Leeren</button>
@@ -411,7 +475,8 @@
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow-lg space-y-3">
-        <button onclick="window.openFinalizeModal()" class="product-btn w-full p-4 rounded-xl font-extrabold text-white bg-green-600 hover:bg-green-700 shadow-xl" disabled id="btn-finalize">Zahlung abschließen</button>
+        <button onclick="window.openFinalizeModal()" class="product-btn w-full p-4 rounded-xl font-extrabold text-white bg-green-600 hover:bg-green-700 shadow-xl" disabled 
+ id="btn-finalize">Zahlung abschließen</button>
         
         <button onclick="window.cancelLastTransaction()" class="product-btn w-full p-3 rounded-xl font-bold text-white bg-red-700 hover:bg-red-800">Letzte Rechnung stornieren</button>
         
@@ -426,31 +491,34 @@
   <div id="print-receipt-container" class="receipt-print"></div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { 
-        getAuth, 
-        signInWithEmailAndPassword, 
-        createUserWithEmailAndPassword, 
-        sendPasswordResetEmail, 
-        onAuthStateChanged, 
-        signOut 
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-        getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-        query, where, orderBy, serverTimestamp, Timestamp, limit
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    
+    // Global State
+    let currentUser = null;
+    let categories = {};
+    let products = {};
+    let currentBestellung = [];
+    let totalBrutto = 0.00;
+    let currentQuantity = 1;
+    let cashReceivedInput = '0';
+    let cashPaymentMethod = 'BAR'; // 'BAR' or 'KARTE'
+    let userSettings = null; // Stored user settings (companyName, address, taxId, taxRate, reversalCode, cashBoxBalance)
+    let reversalCode = null; // NEU: Globaler Speicher für die unmaskierte PIN
+    let currentPinInput = '';
+    let transactionHistory = [];
+    let cashBoxBalance = 0.00;
+    let pinActionCallback = null; // Callback-Funktion nach erfolgreicher PIN-Eingabe
 
-    // ---------- Firebase config (aus deiner Datei) ----------
-    // HIER MÜSSEN IHRE EIGENEN ZUGANGSDATEN EINGEFÜGT WERDEN
+    // Firebase Config (PLACEHOLDER - BITTE ERSETZEN)
     const firebaseConfig = {
-        apiKey: "AIzaSyBoa1jaK18f0yNjzaHTmxXFuZLmQ-Eefhc", 
-        authDomain: "kassensystem-85412.firebaseapp.com",
-        databaseURL: "https://kassensystem-85412-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "kassensystem-85412",
-        storageBucket: "kassensystem-85412.firebasestorage.app", // ANWENDER-UPDATE
-        messagingSenderId: "916536785810", // ANWENDER-UPDATE
-        appId: "1:916536785810:web:0d0319ef565af65d279f4b", // ANWENDER-UPDATE
-        measurementId: "G-W5HWYEXWJ5" // ANWENDER-UPDATE
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
     };
 
     // Initialize Firebase
@@ -458,22 +526,39 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // ---------- Global Vars ----------
-    let currentUser = null;
-    let categories = {}; 
-    let products = {}; 
-    let currentBestellung = []; 
-    let totalBrutto = 0.00;
-    let userSettings = {}; 
-    let currentQuantity = 1;
-    let cashReceivedInput = '0';
-    let cashPaymentMethod = 'BAR'; 
-    let transactionHistory = []; 
-    let cashBoxBalance = 0.00; 
-    let reversalCode = null; 
-    let pinModalTarget = ''; 
-    let cashManInput = '0.00'; 
-    let currentPinInput = ''; // NEU: Globaler Speicher für die unmaskierte PIN
+    // Initial check for authentication state
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            window.showLoading(true);
+            seedUserDataIfNeeded(user.uid).then(() => {
+                window.loadSettings();
+                window.loadProductsAndCategories();
+                window.loadTransactionHistory(); // Starte das Laden der Historie
+                window.updateAppView('kasse');
+            }).catch(err => {
+                console.error("Initialization error:", err);
+                window.showToast("Fehler bei der Initialisierung.", 'error');
+            }).finally(() => {
+                window.showLoading(false);
+            });
+        } else {
+            currentUser = null;
+            window.updateAppView('login');
+            // Reset state on logout
+            categories = {};
+            products = {};
+            currentBestellung = [];
+            totalBrutto = 0.00;
+            currentQuantity = 1;
+            cashReceivedInput = '0';
+            cashPaymentMethod = 'BAR';
+            transactionHistory = [];
+            cashBoxBalance = 0.00;
+            reversalCode = null;
+        }
+    });
+
 
     // ---------- Utility functions ----------
     window.updateAppView = function(view){
@@ -481,7 +566,7 @@
         document.getElementById('registration-modal').style.display='none';
         document.getElementById('forgot-password-modal').style.display='none';
         document.getElementById('kasse-content').style.display='none';
-        
+
         switch(view){
             case 'login':
                 window.openLoginModal();
@@ -492,32 +577,28 @@
                 break;
         }
     }
-
     window.showLoading = function(show){
-        document.getElementById('async-loading-overlay').style.display = show ? 'flex' : 'none';
+        document.getElementById('async-loading-overlay').style.display = show ?
+        'flex' : 'none';
     }
-
     window.showToast = function(message, type = 'info'){
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
+
         toast.className = `toast toast-${type} shadow-lg`;
         toast.innerText = message;
         container.appendChild(toast);
-        
         // Show
         setTimeout(() => toast.style.opacity = 1, 10);
-        
         // Hide and remove
         setTimeout(() => {
             toast.style.opacity = 0;
             setTimeout(() => toast.remove(), 250);
         }, 3000);
     }
-
     window.closeModal = function(id){
         document.getElementById(id).style.display = 'none';
         window.toggleReceiptColumn(true); // Re-show receipt column on close
-        
         if(id === 'finalize-modal'){
             // Reset cash input on closing finalize modal
             cashReceivedInput = '0';
@@ -527,101 +608,106 @@
             window.setPaymentMethod('BAR');
         }
     }
-
     window.toggleReceiptColumn = function(show){
-        document.getElementById('receipt-column').style.display = show ? 'flex' : 'none';
+         const receiptColumn = document.getElementById('receipt-column');
+         if(receiptColumn){
+             receiptColumn.style.display = show ? 'flex' : 'none';
+         }
     }
 
-    // ---------- Auth Logic (unchanged, but globalized with window) ----------
-
-    window.handleLoginSubmit = async function() {
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        window.showLoading(true);
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            window.showToast('Erfolgreich angemeldet.', 'success');
-        } catch(err) {
-            console.error(err);
-            window.showToast('Anmeldung fehlgeschlagen: ' + (err.message||err.code), 'error');
-        } finally { window.showLoading(false); }
+    // ---------- Authentication ----------
+    window.openRegistrationModal = function(){
+        document.getElementById('login-modal').style.display='none';
+        document.getElementById('registration-modal').style.display='flex';
     }
-
-    window.handleRegisterSubmit = async function() {
+    window.handleRegisterSubmit = function(){
         const email = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
         window.showLoading(true);
-        try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            window.showToast('Erfolgreich registriert. Bitte melden Sie sich an.', 'success');
-            window.closeModal('registration-modal');
-            window.openLoginModal();
-        } catch(err) {
-            console.error(err);
-            window.showToast('Registrierung fehlgeschlagen: ' + (err.message||err.code), 'error');
-        } finally { window.showLoading(false); }
+        createUserWithEmailAndPassword(auth, email, password)
+            .then(() => {
+                window.showToast('Registrierung erfolgreich!', 'success');
+                // The onAuthStateChanged handler will handle the rest
+            })
+            .catch((error) => {
+                window.showToast(`Registrierung fehlgeschlagen: ${error.message}`, 'error');
+            })
+            .finally(() => window.showLoading(false));
     }
-
-    window.handlePasswordReset = async function() {
+    window.openLoginModal = function(){
+        document.getElementById('login-modal').style.display='flex';
+    }
+    window.openForgotPasswordModal = function(){
+        document.getElementById('login-modal').style.display='none';
+        document.getElementById('forgot-password-modal').style.display='flex';
+    }
+    window.handlePasswordReset = function(){
         const email = document.getElementById('reset-email').value;
         window.showLoading(true);
-        try {
-            await sendPasswordResetEmail(auth, email);
-            window.showToast('Link zum Zurücksetzen des Passworts gesendet. Bitte überprüfen Sie Ihr Postfach.', 'info');
-            window.closeModal('forgot-password-modal');
-            window.openLoginModal();
-        } catch(err) {
-            console.error(err);
-            window.showToast('Fehler beim Senden des Links: ' + (err.message||err.code), 'error');
-        } finally { window.showLoading(false); }
+        sendPasswordResetEmail(auth, email)
+            .then(() => {
+                window.showToast('Link zum Zurücksetzen gesendet!', 'success');
+                closeModal('forgot-password-modal');
+                openLoginModal();
+            })
+            .catch((error) => {
+                window.showToast(`Fehler beim Zurücksetzen: ${error.message}`, 'error');
+            })
+            .finally(() => window.showLoading(false));
     }
-
-    window.handleLogout = async function() {
+    window.handleLoginSubmit = function(){
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
         window.showLoading(true);
-        try {
-            await signOut(auth);
-            window.showToast('Erfolgreich abgemeldet.', 'info');
-        } catch(err) {
-            console.error(err);
-            window.showToast('Abmeldung fehlgeschlagen.', 'error');
-        } finally { window.showLoading(false); }
+        signInWithEmailAndPassword(auth, email, password)
+            .catch((error) => {
+                window.showToast(`Anmeldung fehlgeschlagen: ${error.message.includes('auth/invalid') ? 'Ungültige Anmeldedaten.' : error.message}`, 'error');
+            })
+            .finally(() => window.showLoading(false));
     }
-
-    // ---------- Auth State Observer (unchanged) ----------
-    onAuthStateChanged(auth, async user => {
-        if(user) { 
-            currentUser = user; 
-            await initUserData(); 
-        } 
-        else { 
-            currentUser = null; 
-            window.updateAppView('login'); 
-            // Clear local data
-            categories = {}; products = {}; currentBestellung = []; totalBrutto = 0.00; userSettings = {};
-            currentQuantity = 1; cashReceivedInput = '0'; cashPaymentMethod = 'BAR'; transactionHistory = [];
-            cashBoxBalance = 0.00; reversalCode = null; 
-        }
-    });
+    window.handleLogout = function(){
+        signOut(auth).then(() => {
+            window.showToast('Erfolgreich abgemeldet.', 'info');
+        }).catch((error) => {
+            window.showToast(`Logout fehlgeschlagen: ${error.message}`, 'error');
+        });
+    }
 
     // ---------- Firestore refs ----------
-    function settingsDocRef(uid){ return doc(db, 'users', uid, 'meta', 'settings'); }
-    function categoriesCollectionRef(uid){ return collection(db, 'users', uid, 'categories'); }
-    function productsCollectionRef(uid){ return collection(db, 'users', uid, 'products'); }
-    function transactionsCollectionRef(uid){ return collection(db, 'users', uid, 'transactions'); }
-    function cashTransactionsCollectionRef(uid){ return collection(db, 'users', uid, 'cash-transactions'); } 
+    function settingsDocRef(uid){
+        return doc(db, 'users', uid, 'meta', 'settings');
+    }
+    function categoriesCollectionRef(uid){
+        return collection(db, 'users', uid, 'categories');
+    }
+    function productsCollectionRef(uid){
+        return collection(db, 'users', uid, 'products');
+    }
+    function transactionsCollectionRef(uid){
+        return collection(db, 'users', uid, 'transactions');
+    }
+    function cashTransactionsCollectionRef(uid){
+        return collection(db, 'users', uid, 'cash-transactions');
+    }
 
     // ---------- Seed / Init (GEÄNDERT für neue Default-Werte) ----------
     async function seedUserDataIfNeeded(uid){
         const sRef = settingsDocRef(uid);
         const sSnap = await getDoc(sRef);
-        
-        if(sSnap.exists()){ return; }
-        
+        if(sSnap.exists()){
+            return;
+        }
         window.showToast('Erste Anmeldung erkannt. Erzeuge Standarddaten...', 'info');
 
         // ACHTUNG: Globale Variable für Defaults überschreiben, falls notwendig
-        userSettings = { companyName:'Kassensystem', address:'', taxId:'', taxRate:19.0, reversalCode: null, cashBoxBalance: 0.00 }; 
-
+        userSettings = {
+            companyName:'Kassensystem',
+            address:'',
+            taxId:'',
+            taxRate:19.0,
+            reversalCode: null,
+            cashBoxBalance: 0.00
+        };
         await setDoc(sRef, userSettings);
 
         // Standard-Kategorien
@@ -633,760 +719,649 @@
         ];
         await Promise.all(standardCats.map(cat => setDoc(doc(catRef, cat.id), cat)));
 
-        // Standard-Produkte (mit Bestand)
+        // Standard-Produkte
         const prodRef = productsCollectionRef(uid);
-        const standardProds = [
-            { name: 'Kaffee', price: '2.50', categoryId: 'cat1', taxRate: 19.0, stock: 50 }, 
-            { name: 'Cola', price: '3.00', categoryId: 'cat1', taxRate: 19.0, stock: 100 },
-            { name: 'Kuchen', price: '4.50', categoryId: 'cat2', taxRate: 7.0, stock: 30 },
-            { name: 'Sandwich', price: '5.50', categoryId: 'cat2', taxRate: 19.0, stock: 25 },
+        const standardProducts = [
+            { name: 'Kaffee', price: '2.50', categoryId: 'cat1', taxRate: 19.0, stock: 100 },
+            { name: 'Cola', price: '2.00', categoryId: 'cat1', taxRate: 19.0, stock: 100 },
+            { name: 'Brot', price: '1.50', categoryId: 'cat2', taxRate: 7.0, stock: 50 },
+            { name: 'Kuchen', price: '3.00', categoryId: 'cat2', taxRate: 7.0, stock: 50 },
+            { name: 'Andere Sache', price: '5.00', categoryId: 'cat3', taxRate: 19.0, stock: 100 },
         ];
-        await Promise.all(standardProds.map(prod => addDoc(prodRef, prod)));
+        await Promise.all(standardProducts.map(prod => addDoc(prodRef, prod)));
     }
 
-    async function initUserData(){
-        window.showLoading(true);
-        try{
-            await seedUserDataIfNeeded(currentUser.uid);
-            await window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
-            window.updateAppView('kasse');
-        } catch(err){
-            console.error('Initialisierungsfehler:', err);
-            window.showToast('Fehler beim Laden der Daten. Bitte erneut versuchen.', 'error');
-            await signOut(auth);
-        } finally { window.showLoading(false); }
-    }
 
-    // ---------- Settings (KORRIGIERT: Jetzt global) ----------
-    window.loadSettings = async function(){ // KORREKTUR: Funktion global verfügbar machen
+    // ---------- Settings (MODIFIZIERT: Neue Funktionen für Sicherheitscode) ----------
+    window.loadSettings = async function(){
         if(!currentUser) return;
-        const sRef = settingsDocRef(currentUser.uid);
-        const sSnap = await getDoc(sRef);
-        if(sSnap.exists()){ 
-            userSettings = sSnap.data();
-            // KORREKTUR: Sicherstellen, dass reversalCode als String behandelt wird, falls er existiert.
-            reversalCode = userSettings.reversalCode ? String(userSettings.reversalCode) : null; 
-            cashBoxBalance = parseFloat(userSettings.cashBoxBalance || 0.00); 
-        } else { 
-            // Default Werte (Wichtig für neue Nutzer)
-            userSettings = { companyName:'Kassensystem', address:'', taxId:'', taxRate:19.0, reversalCode: null, cashBoxBalance: 0.00 }; 
-            await setDoc(sRef, userSettings); 
+        try{
+            const sSnap = await getDoc(settingsDocRef(currentUser.uid));
+            if(sSnap.exists()){
+                userSettings = sSnap.data();
+                // Update global state
+                reversalCode = userSettings.reversalCode ? String(userSettings.reversalCode) : null;
+                cashBoxBalance = parseFloat(userSettings.cashBoxBalance || 0.00);
+
+                // Update UI fields if the general settings form is open (or initialize the values)
+                if (document.getElementById('company-name')) document.getElementById('company-name').value = userSettings.companyName || '';
+                if (document.getElementById('address')) document.getElementById('address').value = userSettings.address || '';
+                if (document.getElementById('tax-id')) document.getElementById('tax-id').value = userSettings.taxId || '';
+                if (document.getElementById('tax-rate')) document.getElementById('tax-rate').value = userSettings.taxRate || 19.0;
+                
+                // NEU: Separates Feld für Sicherheitscode
+                if (document.getElementById('reversal-code-separate')) {
+                    document.getElementById('reversal-code-separate').value = reversalCode || '';
+                }
+            } else {
+                // Should not happen if seedUserDataIfNeeded runs correctly
+                window.showToast('Einstellungen konnten nicht geladen werden.', 'error');
+            }
+        } catch(err){
+            console.error(err);
+            window.showToast('Fehler beim Laden der Einstellungen.', 'error');
         }
     }
+    
+    // MODIFIZIERT: Zeigt das Hauptmenü und versteckt die anderen
+    window.showSettingsMenu = function(){
+        document.getElementById('settings-menu').style.display='block';
+        document.getElementById('general-settings-form-container').style.display='none';
+        document.getElementById('security-code-settings-container').style.display='none'; // NEU: Code-Container verstecken
+    }
 
+    // MODIFIZIERT: Zeigt Kassenbon-Einstellungen und versteckt die anderen
+    window.openGeneralSettings = function(){
+        document.getElementById('settings-menu').style.display='none';
+        document.getElementById('general-settings-form-container').style.display='block';
+        document.getElementById('security-code-settings-container').style.display='none'; // NEU: Code-Container verstecken
+        // Lade die aktuellen Einstellungen
+        window.loadSettings();
+    }
+    
+    // NEUE FUNKTION: Zeigt Sicherheitscode-Verwaltung
+    window.openSecurityCodeSettings = function(){
+        document.getElementById('settings-menu').style.display='none';
+        document.getElementById('general-settings-form-container').style.display='none';
+        document.getElementById('security-code-settings-container').style.display='block';
+        // Lade den aktuellen Code in das neue Feld
+        window.loadSettings(); 
+    }
+
+    // MODIFIZIERT: Speichert nur die Bon-Einstellungen (ohne Sicherheitscode)
     window.saveSettings = async function(){
-        if(!currentUser) { window.showToast('Nicht angemeldet','error'); return; }
+        if(!currentUser) return;
         window.showLoading(true);
         try{
             const sRef = settingsDocRef(currentUser.uid);
-            const codeInput = document.getElementById('reversal-code').value.trim();
+            
+            // Verwenden Sie den bestehenden reversalCode, da er hier nicht geändert wird.
+            const existingReversalCode = userSettings.reversalCode; 
             
             userSettings = {
                 companyName: document.getElementById('company-name').value || 'Kassensystem',
                 address: document.getElementById('address').value || '',
                 taxId: document.getElementById('tax-id').value || '',
                 taxRate: parseFloat(document.getElementById('tax-rate').value) || 19.0,
-                reversalCode: (codeInput.length === 4 && /^\d+$/.test(codeInput)) ? codeInput : null, 
-                cashBoxBalance: cashBoxBalance, 
+                reversalCode: existingReversalCode, // Bestehenden Code beibehalten
+                cashBoxBalance: cashBoxBalance,
             };
             
-            await setDoc(sRef, userSettings);
-            // Sicherstellen, dass die globale Variable sofort aktualisiert wird (Korrektur: String-Konvertierung hinzugefügt)
-            reversalCode = userSettings.reversalCode ? String(userSettings.reversalCode) : null; 
-            window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
+            await setDoc(sRef, userSettings); 
+            
+            window.loadSettings(); 
             window.showToast('Einstellungen gespeichert.', 'success');
         } catch(err){
             console.error(err);
             window.showToast('Fehler beim Speichern der Einstellungen.', 'error');
-        } finally { window.showLoading(false); }
-    }
-
-    // NEU: PIN Logic für Settings und Report (KORRIGIERT: Vergleichstyp und Eingabe-Akkumulation)
-    window.updatePinInputDisplay = function(pin) {
-        document.getElementById('pin-input-display').innerText = '*'.repeat(pin.length);
-        document.getElementById('pin-enter-btn').disabled = pin.length !== 4;
-    }
-
-    // KORRIGIERT: Behebt das Problem der nicht akkumulierten Eingabe
-    window.handlePinInput = function(input) {
-        if (input === 'clear') {
-            currentPinInput = ''; // Reset
-        } else if (input === 'enter') {
-            // KORREKTUR: Beide als String vergleichen
-            if (currentPinInput.toString() === String(reversalCode)) { 
-                closeModal('pin-modal');
-                if (pinModalTarget === 'settings') {
-                    window.openSettingsModal(); 
-                } else if (pinModalTarget === 'report') {
-                    window.openReportModal(); 
-                }
-                pinModalTarget = '';
-                window.showToast('Code korrekt.', 'success');
-            } else {
-                showToast('Falscher Code.', 'error');
-                currentPinInput = ''; // Reset on failure
-            }
-        } else if (currentPinInput.length < 4) {
-            currentPinInput += input;
+        } finally {
+            window.showLoading(false);
         }
-        
-        window.updatePinInputDisplay(currentPinInput);
+    }
+    
+    // NEUE FUNKTION: Speichert nur den Sicherheitscode
+    window.saveSecurityCode = async function(){
+        if(!currentUser) return;
+        window.showLoading(true);
+        try{
+            const sRef = settingsDocRef(currentUser.uid);
+            const codeInput = document.getElementById('reversal-code-separate').value.trim();
+            
+            const newReversalCode = (codeInput.length === 4 && /^\d+$/.test(codeInput)) ? codeInput : null;
+            
+            // Update nur den Code im Firestore
+            await updateDoc(sRef, { 
+                reversalCode: newReversalCode
+            }); 
+            
+            // Globale Variablen aktualisieren
+            userSettings.reversalCode = newReversalCode;
+            reversalCode = newReversalCode ? String(newReversalCode) : null;
+            
+            window.showToast('Sicherheitscode gespeichert.', 'success');
+        } catch(err){
+            console.error(err);
+            window.showToast('Fehler beim Speichern des Codes.', 'error');
+        } finally {
+            window.showLoading(false);
+        }
     }
 
-    // KORRIGIERT: Setzt currentPinInput beim Öffnen des Modals zurück
-    window.openPinModal = function(target) {
-        if (!reversalCode) {
-            // Kein PIN gesetzt, Modal überspringen
-            if (target === 'settings') {
-                window.openSettingsModal();
-            } else if (target === 'report') {
-                window.openReportModal();
+
+    // ---------- PIN / Reversal Code Handling ----------
+    window.updatePinInputDisplay = function(){
+        document.getElementById('pin-input-display').innerText = currentPinInput.padEnd(4, '_').split('').map(c => c === '_' ? '_' : '•').join(' ');
+        document.getElementById('pin-enter-btn').disabled = currentPinInput.length !== 4;
+    }
+
+    window.handlePinInput = function(key){
+        if(key === 'clear'){
+            currentPinInput = '';
+        } else if (key === 'enter'){
+            if(currentPinInput.length === 4){
+                if(reversalCode && currentPinInput === reversalCode){
+                    window.showToast('Code korrekt.', 'success');
+                    closeModal('pin-modal');
+                    if(pinActionCallback) pinActionCallback();
+                } else if (!reversalCode && pinActionCallback){
+                    // If no code is set, allow access
+                    closeModal('pin-modal');
+                    pinActionCallback();
+                } else {
+                    window.showToast('Falscher Code.', 'error');
+                    currentPinInput = '';
+                }
             }
+        } else if (currentPinInput.length < 4 && key.match(/^\d$/)){
+            currentPinInput += key;
+        }
+        window.updatePinInputDisplay();
+    }
+
+    window.openPinModal = function(title, callback){
+        if(!reversalCode){
+            // If no code is set, skip the modal and run the callback immediately
+            if(callback) callback();
             return;
         }
-        
-        pinModalTarget = target;
-        currentPinInput = ''; // Wichtig: PIN-Eingabe zurücksetzen
-        window.updatePinInputDisplay(currentPinInput); // Display initialisieren (0 Sterne)
 
-        document.getElementById('pin-modal-title').innerText = (target === 'settings' ? 'Einstellungen' : 'Tagesabschluss/Storno') + ' Code';
-        document.getElementById('pin-modal').style.display = 'flex';
-        document.getElementById('pin-enter-btn').disabled = true;
+        document.getElementById('pin-modal-title').innerText = title;
+        currentPinInput = '';
+        pinActionCallback = callback;
+        window.updatePinInputDisplay();
+        document.getElementById('pin-modal').style.display='flex';
+        window.toggleReceiptColumn(false); // Hide receipt column when PIN modal is open
+    }
+
+    window.openSettingsModalWithPin = function(){
+        window.openPinModal('Einstellungen freischalten', () => {
+            document.getElementById('settings-modal').style.display='flex';
+            window.showSettingsMenu(); // Start with the menu
+            window.toggleReceiptColumn(false);
+        });
+    }
+
+    window.openReportModalWithPin = function(){
+        window.openPinModal('Tagesabschluss freischalten', () => {
+            document.getElementById('report-modal').style.display='flex';
+            window.loadTransactionHistory();
+            window.toggleReceiptColumn(false);
+        });
+    }
+
+
+    // ---------- Product/Category Management ----------
+    window.openProductModal = function(){
+        document.getElementById('product-modal').style.display='flex';
+        window.loadProductsAndCategories();
         window.toggleReceiptColumn(false);
     }
+    
+    // ... (rest of product/category functions remain unchanged - loadProductsAndCategories, addCategory, addProduct, updateProductPrice, deleteProduct, deleteCategory)
+    
+    window.loadProductsAndCategories = async function(){
+        if (!currentUser) return;
+        window.showLoading(true);
 
-    window.openSettingsModalWithPin = function() {
-        window.openPinModal('settings');
-    }
-
-    window.openReportModalWithPin = function() {
-        window.openPinModal('report');
-    }
-
-    // MODIFIZIERT: openSettingsModal muss das Formular mit Werten füllen
-    window.openSettingsModal = function(){
-        window.closeModal('report-modal'); 
-        window.toggleReceiptColumn(false);
-        document.getElementById('settings-modal').style.display='flex';
-        window.showSettingsMenu(); // Start with the menu
-        // Werte laden
-        document.getElementById('company-name').value = userSettings.companyName || '';
-        document.getElementById('address').value = userSettings.address || '';
-        document.getElementById('tax-id').value = userSettings.taxId || '';
-        document.getElementById('tax-rate').value = userSettings.taxRate.toFixed(1);
-        document.getElementById('reversal-code').value = userSettings.reversalCode || ''; 
-    }
-
-    window.showSettingsMenu = function(){
-        document.getElementById('settings-menu').style.display = 'block';
-        document.getElementById('general-settings-form-container').style.display = 'none';
-    }
-
-    window.openGeneralSettings = function(){
-        document.getElementById('settings-menu').style.display = 'none';
-        document.getElementById('general-settings-form-container').style.display = 'block';
-    }
-
-    // ---------- Products & Categories (MODIFIZIERT: Jetzt global) ----------
-    window.loadProductsAndCategories = async function(){ // KORREKTUR: Funktion global verfügbar machen
-        // ... (existing logic) ...
-        const cSnap = await getDocs(categoriesCollectionRef(currentUser.uid));
+        // 1. Kategorien laden
+        const catQ = query(categoriesCollectionRef(currentUser.uid));
+        const catSnap = await getDocs(catQ);
         categories = {};
-        cSnap.forEach(doc => categories[doc.id] = { id: doc.id, ...doc.data() });
+        catSnap.forEach(d => categories[d.id] = {...d.data(), id: d.id});
 
-        const pSnap = await getDocs(productsCollectionRef(currentUser.uid));
+        // 2. Produkte laden
+        const prodQ = query(productsCollectionRef(currentUser.uid));
+        const prodSnap = await getDocs(prodQ);
         products = {};
-        pSnap.forEach(doc => {
-            const data = doc.data();
-            products[doc.id] = { 
-                id: doc.id, 
-                ...data,
-                price: parseFloat(data.price), // Als float speichern
-                taxRate: parseFloat(data.taxRate), // Als float speichern
-                stock: parseInt(data.stock || 0) // NEU: Bestand als Integer
-            };
+        prodSnap.forEach(d => products[d.id] = {...d.data(), id: d.id, price: parseFloat(d.data().price), taxRate: parseFloat(d.data().taxRate) || 19.0, stock: parseInt(d.data().stock || 0)});
+
+        // 3. UI aktualisieren (Kasse)
+        window.renderProductGrid();
+
+        // 4. UI aktualisieren (Verwaltung)
+        window.renderCategoryManagement();
+        window.renderProductManagement();
+        
+        window.showLoading(false);
+    }
+
+    window.renderProductGrid = function(categoryId = null){
+        const grid = document.getElementById('product-grid');
+        const tabs = document.getElementById('category-tabs');
+        grid.innerHTML = '';
+        tabs.innerHTML = '';
+
+        // Tabs rendern
+        tabs.innerHTML = `<button onclick="window.renderProductGrid(null)" class="product-btn p-2 rounded-lg font-bold text-white ${categoryId === null ? 'bg-red-700' : 'bg-red-500'}">Alle</button>`;
+        Object.values(categories).sort((a,b) => a.order - b.order).forEach(cat => {
+            tabs.innerHTML += `<button onclick="window.renderProductGrid('${cat.id}')" class="product-btn p-2 rounded-lg font-bold text-white ${categoryId === cat.id ? 'bg-red-700' : 'bg-red-500'}">${cat.name}</button>`;
         });
 
-        window.renderCategoryTabs();
-        window.renderProductGrid('cat1'); // Default to first tab (assuming 'cat1' exists)
+        // Produkte rendern
+        const productsToDisplay = Object.values(products).filter(p => categoryId === null || p.categoryId === categoryId);
+        
+        if (productsToDisplay.length === 0) {
+             grid.innerHTML = '<p class="text-gray-500 col-span-full text-center p-4">Keine Produkte in dieser Kategorie.</p>';
+        }
+
+        productsToDisplay.sort((a, b) => a.name.localeCompare(b.name)).forEach(product => {
+            const stockStatus = product.stock > 0 ? `<span class="text-xs text-green-600">(${product.stock} auf Lager)</span>` : '<span class="text-xs text-red-600">(Ausverkauft)</span>';
+            grid.innerHTML += `
+                <button onclick="window.addToBestellung('${product.id}')" class="product-btn p-4 rounded-xl bg-white shadow-md hover:bg-red-50 flex flex-col justify-between" ${product.stock <= 0 ? 'disabled' : ''}>
+                    <div class="text-lg font-bold text-gray-800">${product.name}</div>
+                    <div class="mt-2">
+                        <div class="text-xl font-extrabold text-red-600">${product.price.toFixed(2).replace('.', ',')} €</div>
+                        ${stockStatus}
+                    </div>
+                </button>
+            `;
+        });
+    }
+
+    window.renderCategoryManagement = function(){
+        const list = document.getElementById('category-list');
+        const select = document.getElementById('new-product-category');
+        list.innerHTML = '';
+        select.innerHTML = '<option value="">Kategorie wählen</option>';
+
+        Object.values(categories).sort((a,b) => a.order - b.order).forEach(cat => {
+            list.innerHTML += `
+                <div class="flex justify-between items-center p-2 border rounded-lg bg-gray-50">
+                    <span class="font-semibold">${cat.name}</span>
+                    <button onclick="window.deleteCategory('${cat.id}')" class="text-red-500 text-sm ml-4">Löschen</button>
+                </div>
+            `;
+            select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+        });
+    }
+    
+    window.renderProductManagement = function(){
+        const list = document.getElementById('product-list');
+        list.innerHTML = '';
+
+        Object.values(products).sort((a, b) => a.name.localeCompare(b.name)).forEach(product => {
+             const categoryName = categories[product.categoryId] ? categories[product.categoryId].name : 'Ohne Kategorie';
+             const taxRate = product.taxRate || userSettings.taxRate;
+             list.innerHTML += `
+                <div class="flex items-center space-x-2 p-2 border rounded-lg bg-white">
+                    <span class="font-semibold flex-grow">${product.name} (${categoryName} / ${taxRate}%)</span>
+                    
+                    <input type="number" id="price-${product.id}" value="${product.price.toFixed(2)}" step="0.01" class="w-20 p-1 border rounded-lg text-right text-sm">
+                    <input type="number" id="stock-${product.id}" value="${product.stock}" min="0" class="w-16 p-1 border rounded-lg text-right text-sm">
+                    
+                    <button onclick="window.updateProduct('${product.id}')" class="text-indigo-500 text-sm ml-2">Speichern</button>
+                    <button onclick="window.deleteProduct('${product.id}')" class="text-red-500 text-sm ml-2">Löschen</button>
+                </div>
+            `;
+        });
     }
 
     window.addCategory = async function(){
-        // ... (existing logic) ...
+        if (!currentUser) return;
         const name = document.getElementById('new-category-name').value.trim();
-        if(!name) { window.showToast('Bitte Name eingeben', 'error'); return; }
-        // ... (save logic) ...
-        try{
-            await addDoc(categoriesCollectionRef(currentUser.uid), { name: name, order: Date.now() });
-            document.getElementById('new-category-name').value = '';
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
-            window.showToast('Kategorie hinzugefügt.', 'success');
-            window.renderProductModalContent();
-        } catch(err){
-            console.error(err);
-            window.showToast('Fehler beim Hinzufügen der Kategorie.', 'error');
-        } finally { window.showLoading(false); }
-    }
-
-    window.deleteCategory = async function(id){
-        // ... (existing logic) ...
-        if(!confirm('Wollen Sie diese Kategorie und alle zugehörigen Produkte wirklich löschen?')) return;
+        if(!name) return;
         window.showLoading(true);
         try{
-            await deleteDoc(doc(categoriesCollectionRef(currentUser.uid), id));
-            // Produkte löschen
-            const q = query(productsCollectionRef(currentUser.uid), where('categoryId', '==', id));
-            const pSnap = await getDocs(q);
-            const deletePromises = pSnap.docs.map(d => deleteDoc(doc(productsCollectionRef(currentUser.uid), d.id)));
-            await Promise.all(deletePromises);
-            
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen 
-            window.showToast('Kategorie und Produkte gelöscht.', 'success');
-            window.renderProductModalContent();
+            const newCatRef = doc(categoriesCollectionRef(currentUser.uid));
+            await setDoc(newCatRef, {
+                name: name,
+                order: Object.keys(categories).length + 1
+            });
+            document.getElementById('new-category-name').value = '';
+            window.showToast('Kategorie hinzugefügt.', 'success');
+            await window.loadProductsAndCategories();
         } catch(err){
-            console.error(err);
-            window.showToast('Fehler beim Löschen der Kategorie.', 'error');
-        } finally { window.showLoading(false); }
+            window.showToast('Fehler beim Hinzufügen der Kategorie.', 'error');
+        } finally {
+            window.showLoading(false);
+        }
     }
 
-    // MODIFIZIERT: addProduct (für Bestand)
     window.addProduct = async function(){
-        if(!currentUser) return;
+        if (!currentUser) return;
         const name = document.getElementById('new-product-name').value.trim();
-        const price = document.getElementById('new-product-price').value;
-        const stock = parseInt(document.getElementById('new-product-stock').value) || 0; 
+        const price = parseFloat(document.getElementById('new-product-price').value);
+        const stock = parseInt(document.getElementById('new-product-stock').value) || 0;
         const categoryId = document.getElementById('new-product-category').value;
         const taxRate = parseFloat(document.getElementById('new-product-tax-rate').value);
 
-        if(!name || isNaN(price) || parseFloat(price) <= 0 || !categoryId || isNaN(stock) || stock < 0){ 
-            window.showToast('Ungültige Eingabe.', 'error');
+        if(!name || isNaN(price) || price <= 0 || !categoryId){
+            window.showToast('Bitte Name, Preis, Kategorie und Bestand eingeben.', 'error');
             return;
         }
 
         window.showLoading(true);
         try{
-            await addDoc(productsCollectionRef(currentUser.uid), {
+            const prodRef = productsCollectionRef(currentUser.uid);
+            await addDoc(prodRef, {
                 name: name,
-                price: parseFloat(price).toFixed(2), // Save as string with 2 decimal places
+                price: price.toFixed(2),
                 categoryId: categoryId,
                 taxRate: taxRate,
-                stock: stock, // NEU: Bestand speichern
+                stock: stock,
             });
-            
             document.getElementById('new-product-name').value = '';
             document.getElementById('new-product-price').value = '';
-            document.getElementById('new-product-stock').value = '1'; 
-            
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
+            document.getElementById('new-product-stock').value = '1';
             window.showToast('Produkt hinzugefügt.', 'success');
-            window.renderProductModalContent();
+            await window.loadProductsAndCategories();
         } catch(err){
-            console.error(err);
             window.showToast('Fehler beim Hinzufügen des Produkts.', 'error');
-        } finally { window.showLoading(false); }
+        } finally {
+            window.showLoading(false);
+        }
     }
 
-    window.deleteProduct = async function(id){
-        // ... (existing logic) ...
-        if(!confirm('Wollen Sie dieses Produkt wirklich löschen?')) return;
+    window.updateProduct = async function(productId){
+         if (!currentUser) return;
+         window.showLoading(true);
+         try{
+             const newPrice = parseFloat(document.getElementById(`price-${productId}`).value);
+             const newStock = parseInt(document.getElementById(`stock-${productId}`).value);
+             if (isNaN(newPrice) || newPrice <= 0 || isNaN(newStock)) {
+                 window.showToast('Ungültiger Preis oder Bestand.', 'error');
+                 return;
+             }
+             
+             const pRef = doc(productsCollectionRef(currentUser.uid), productId);
+             await updateDoc(pRef, { 
+                 price: newPrice.toFixed(2),
+                 stock: newStock
+             });
+             
+             // Update local state and UI
+             products[productId].price = newPrice;
+             products[productId].stock = newStock;
+
+             window.renderProductGrid(); 
+             window.showToast('Produkt aktualisiert.', 'success');
+         } catch(err){
+             window.showToast('Fehler beim Aktualisieren des Produkts.', 'error');
+         } finally {
+             window.showLoading(false);
+         }
+    }
+
+    window.deleteProduct = async function(productId){
+        if(!currentUser || !confirm('Sind Sie sicher, dass Sie dieses Produkt löschen möchten?')) return;
         window.showLoading(true);
         try{
-            await deleteDoc(doc(productsCollectionRef(currentUser.uid), id));
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
-            window.showToast('Produkt gelöscht.', 'success');
-            window.renderProductModalContent();
+            const pRef = doc(productsCollectionRef(currentUser.uid), productId);
+            await deleteDoc(pRef);
+            window.showToast('Produkt gelöscht.', 'info');
+            await window.loadProductsAndCategories();
         } catch(err){
-            console.error(err);
             window.showToast('Fehler beim Löschen des Produkts.', 'error');
-        } finally { window.showLoading(false); }
+        } finally {
+            window.showLoading(false);
+        }
     }
 
-    // MODIFIZIERT: saveProductPrice (für Bestand & TaxRate)
-    window.saveProductPrice = async function(productId){
-        if(!currentUser) return;
-        const newPrice = parseFloat(document.getElementById(`price-input-${productId}`).value);
-        const newStock = parseInt(document.getElementById(`stock-input-${productId}`).value); 
-        const newTaxRate = parseFloat(document.getElementById(`tax-input-${productId}`).value);
-
-        if(isNaN(newPrice) || newPrice <= 0 || isNaN(newTaxRate) || isNaN(newStock) || newStock < 0){ 
-            window.showToast('Ungültige Eingabe für Preis, Bestand oder Steuersatz', 'error');
-            return;
-        }
-
+    window.deleteCategory = async function(categoryId){
+        if(!currentUser || !confirm('Sind Sie sicher, dass Sie diese Kategorie löschen möchten? Alle zugehörigen Produkte bleiben ohne Kategorie.')) return;
         window.showLoading(true);
         try{
-            const prodRef = doc(productsCollectionRef(currentUser.uid), productId);
-            await updateDoc(prodRef, { 
-                price: newPrice.toFixed(2),
-                taxRate: newTaxRate,
-                stock: newStock, 
-            });
+            // Update associated products to remove category ID (optional step, but good practice)
+            const prodQ = query(productsCollectionRef(currentUser.uid), where("categoryId", "==", categoryId));
+            const prodSnap = await getDocs(prodQ);
+            const updatePromises = prodSnap.docs.map(d => updateDoc(doc(db, d.ref.path), { categoryId: '' }));
+            await Promise.all(updatePromises);
 
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
-            window.showToast('Produkt aktualisiert.', 'success');
-        } catch(err){ 
-            console.error(err); 
-            window.showToast('Fehler beim Speichern der Änderungen.', 'error'); 
-        } finally { window.showLoading(false); }
-    }
-
-    // MODIFIZIERT: renderProductModalContent (für Bestand Edit)
-    window.renderProductModalContent = function(){
-        const catListContainer = document.getElementById('category-list');
-        const prodListContainer = document.getElementById('product-list');
-        const newProdCatSelect = document.getElementById('new-product-category');
-        
-        let selectOptions = '<option value="">Kategorie wählen</option>';
-
-        // Kategorien rendern
-        catListContainer.innerHTML = '';
-        Object.values(categories).sort((a,b) => a.order - b.order).forEach(cat => {
-            selectOptions += `<option value="${cat.id}">${cat.name}</option>`;
-            const catDiv = document.createElement('div');
-            catDiv.className = 'flex justify-between items-center p-2 bg-gray-100 rounded-lg';
-            catDiv.innerHTML = `
-                <span class="font-semibold">${cat.name}</span>
-                <button onclick="window.deleteCategory('${cat.id}')" class="p-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600">Löschen</button>
-            `;
-            catListContainer.appendChild(catDiv);
-        });
-        newProdCatSelect.innerHTML = selectOptions;
-
-        // Produktliste rendern
-        prodListContainer.innerHTML = '';
-        Object.values(products).sort((a,b) => a.name.localeCompare(b.name)).forEach(product => {
-            const catName = categories[product.categoryId] ? categories[product.categoryId].name : 'Unbekannt';
-            const prodDiv = document.createElement('div');
-            prodDiv.className = 'border-b pb-2 mb-2 grid grid-cols-12 gap-2 items-center';
-            prodDiv.innerHTML = `
-                <span class="col-span-3 text-sm font-semibold">${product.name}</span>
-                <span class="col-span-2 text-xs text-gray-500">${catName}</span>
-                <input type="number" id="price-input-${product.id}" value="${parseFloat(product.price).toFixed(2)}" step="0.01" class="col-span-2 p-1 border rounded-lg text-sm">
-                <input type="number" id="stock-input-${product.id}" value="${product.stock || 0}" min="0" class="col-span-1 p-1 border rounded-lg text-sm"> <select id="tax-input-${product.id}" class="col-span-1 p-1 border rounded-lg text-sm">
-                    <option value="19.0" ${product.taxRate == 19.0 ? 'selected' : ''}>19%</option>
-                    <option value="7.0" ${product.taxRate == 7.0 ? 'selected' : ''}>7%</option>
-                </select>
-                <button onclick="window.saveProductPrice('${product.id}')" class="col-span-2 p-1 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600">Speichern</button>
-                <button onclick="window.deleteProduct('${product.id}')" class="col-span-2 p-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600">Löschen</button>
-            `;
-            prodListContainer.appendChild(prodDiv);
-        });
-    }
-
-    window.renderCategoryTabs = function(){
-        const container = document.getElementById('category-tabs');
-        container.innerHTML = '';
-
-        // Add 'All' tab
-        const allBtn = document.createElement('button');
-        allBtn.id = `cat-tab-all`;
-        allBtn.className = 'p-2 text-sm font-semibold rounded-lg bg-gray-200 hover:bg-red-200 transition-colors whitespace-nowrap';
-        allBtn.innerText = 'Alle';
-        allBtn.onclick = () => { window.renderProductGrid(null); };
-        container.appendChild(allBtn);
-
-        Object.values(categories).sort((a,b) => a.order - b.order).forEach(cat => {
-            const btn = document.createElement('button');
-            btn.id = `cat-tab-${cat.id}`;
-            btn.className = 'p-2 text-sm font-semibold rounded-lg bg-gray-200 hover:bg-red-200 transition-colors whitespace-nowrap';
-            btn.innerText = cat.name;
-            btn.onclick = () => { window.renderProductGrid(cat.id); };
-            container.appendChild(btn);
-        });
-    }
-
-    // MODIFIZIERT: renderProductGrid (für Bestand)
-    window.renderProductGrid = function(categoryId){
-        const container = document.getElementById('product-grid');
-        container.innerHTML = '';
-
-        document.querySelectorAll('#category-tabs button').forEach(btn => {
-            btn.classList.remove('bg-red-600', 'text-white');
-            btn.classList.add('bg-gray-200', 'text-gray-800');
-        });
-        
-        const activeId = categoryId || 'all';
-        const activeTab = document.getElementById(`cat-tab-${activeId}`);
-        if(activeTab){
-            activeTab.classList.remove('bg-gray-200', 'text-gray-800');
-            activeTab.classList.add('bg-red-600', 'text-white');
+            const cRef = doc(categoriesCollectionRef(currentUser.uid), categoryId);
+            await deleteDoc(cRef);
+            window.showToast('Kategorie gelöscht.', 'info');
+            await window.loadProductsAndCategories();
+        } catch(err){
+            window.showToast('Fehler beim Löschen der Kategorie.', 'error');
+        } finally {
+            window.showLoading(false);
         }
-        
-        // Filtert nach Kategorie UND Produkten mit Bestand > 0
-        const filtered = Object.values(products).filter(p => 
-            (!categoryId || p.categoryId === categoryId) && p.stock > 0 
-        );
-
-        if(filtered.length === 0){
-            container.innerHTML = '<p class="text-gray-500 col-span-full text-center p-4">Keine Produkte in dieser Kategorie oder alle sind ausverkauft.</p>';
-            return;
-        }
-
-        filtered.forEach(product => {
-            const btn = document.createElement('button');
-            const currentStock = product.stock; 
-            const isOutOfStock = currentStock <= 0;
-            
-            btn.className = `product-btn p-4 rounded-xl font-extrabold text-white shadow-lg flex flex-col justify-center items-center text-center h-24 transition-all ${isOutOfStock ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`;
-            
-            btn.innerHTML = `
-                <span class="text-base">${product.name}</span>
-                <span class="text-xs font-normal">${parseFloat(product.price).toFixed(2).replace('.', ',')} € (${product.taxRate.toFixed(0)}%)</span>
-                <span class="text-xs font-bold mt-1">${isOutOfStock ? 'AUSVERKAUFT' : `Lager: ${currentStock}`}</span>
-            `;
-            
-            if (!isOutOfStock) {
-                btn.onclick = () => { addToBestellung(product); };
-            } else {
-                btn.disabled = true;
-            }
-            container.appendChild(btn);
-        });
     }
+    
 
-    // ---------- Kasse / Bestellung (MODIFIZIERT für Bestand Check) ----------
-    window.handleQuantityInput = function(input){
-        // ... (existing logic) ...
-        if(input === 'clear'){
-            currentQuantity = 1;
-        } else if(input === '+'){
-            currentQuantity++;
-        } else {
-            const currentStr = currentQuantity.toString();
-            if(currentStr.length >= 4) return; 
-            
-            if(currentStr === '1' && input !== '0'){
-                currentQuantity = parseInt(input); 
-            } else if (currentStr.length < 4) {
-                currentQuantity = parseInt(currentStr + input);
-            }
-        }
-        currentQuantity = Math.max(1, currentQuantity);
+    // ---------- Quantity Input (Main Numpad) ----------
+    window.updateQuantityDisplay = function(){
         document.getElementById('quantity-display').innerText = currentQuantity;
     }
 
-    function addToBestellung(product){
-        const existingItem = currentBestellung.find(item => item.id === product.id);
-        const itemTaxRate = product.taxRate || userSettings.taxRate || 19.0;
-        const currentStock = product.stock; // Bestand aus dem globalen Produkt-Objekt
-        
-        if (existingItem) {
-            // NEU: Stock check for existing item
-            if (existingItem.quantity + currentQuantity > currentStock) {
-                showToast(`Nicht genug Lagerbestand für ${product.name}. Vorhanden: ${currentStock}, am Bon: ${existingItem.quantity}`, 'error');
-                return;
-            }
-            
-            existingItem.quantity += currentQuantity;
-            existingItem.totalBrutto = parseFloat((existingItem.price * existingItem.quantity).toFixed(2));
-        } else {
-            // NEU: Stock check for new item
-            if (currentQuantity > currentStock) {
-                showToast(`Nicht genug Lagerbestand für ${product.name}. Vorhanden: ${currentStock}`, 'error');
-                return;
-            }
+    window.handleQuantityInput = function(key){
+        if(key === 'clear'){
+            currentQuantity = 1;
+        } else if (key === '+'){
+            currentQuantity = Math.max(1, currentQuantity + 1);
+        } else if (key.match(/^\d$/)){
+            const newQuantityStr = currentQuantity === 1 ? key : String(currentQuantity) + key;
+            currentQuantity = Math.min(999, parseInt(newQuantityStr)); 
+        }
+        window.updateQuantityDisplay();
+    }
 
+    // ---------- Bestelldaten / Receipt Logic ----------
+    window.updateReceipt = function(){
+        const interactiveContent = document.getElementById('receipt-content-interactive');
+        const totalDisplay = document.getElementById('total-display');
+        const finalizeBtn = document.getElementById('btn-finalize');
+        
+        totalBrutto = currentBestellung.reduce((sum, item) => sum + item.totalBrutto, 0);
+
+        if(currentBestellung.length === 0){
+            interactiveContent.innerHTML = '<p class="text-gray-500 text-center p-4">Es wurden noch keine Artikel gebucht.</p>';
+            totalDisplay.innerText = 'GESAMT: 0,00 €';
+            finalizeBtn.disabled = true;
+        } else {
+            interactiveContent.innerHTML = currentBestellung.map((item, index) => `
+                <div class="flex justify-between items-center p-2 border-b">
+                    <span class="text-sm font-semibold flex-grow pr-2">${item.quantity}x ${item.name}</span>
+                    <span class="text-sm font-bold text-red-700">${item.totalBrutto.toFixed(2).replace('.', ',')} €</span>
+                    <button onclick="window.removeFromBestellung(${index})" class="text-xs text-gray-400 hover:text-red-500 ml-2">X</button>
+                </div>
+            `).join('');
+            totalDisplay.innerText = `GESAMT: ${totalBrutto.toFixed(2).replace('.', ',')} €`;
+            finalizeBtn.disabled = false;
+        }
+        // Update cash payment area if modal is open
+        if(document.getElementById('finalize-modal').style.display === 'flex'){
+            window.openFinalizeModal(true); // Re-render if open
+        }
+    }
+
+    window.addToBestellung = function(productId){
+        const product = products[productId];
+        if(!product || product.stock <= 0) {
+            window.showToast('Produkt nicht verfügbar oder kein Bestand.', 'error');
+            return;
+        }
+
+        const quantityToAdd = currentQuantity;
+        if (product.stock < quantityToAdd) {
+            window.showToast(`Nur noch ${product.stock}x von ${product.name} auf Lager.`, 'error');
+            currentQuantity = product.stock;
+            window.updateQuantityDisplay();
+            return;
+        }
+        
+        const existingItemIndex = currentBestellung.findIndex(item => item.id === productId);
+
+        if(existingItemIndex !== -1){
+            const existingItem = currentBestellung[existingItemIndex];
+            const newQuantity = existingItem.quantity + quantityToAdd;
+             if (product.stock < newQuantity) {
+                 window.showToast(`Fehler: Nur ${product.stock}x auf Lager, kann nicht ${newQuantity}x buchen.`, 'error');
+                 return;
+             }
+            existingItem.quantity = newQuantity;
+            existingItem.totalBrutto = newQuantity * product.price;
+        } else {
             currentBestellung.push({
                 id: product.id,
                 name: product.name,
-                price: parseFloat(product.price), 
-                categoryId: product.categoryId,
-                quantity: currentQuantity,
-                totalBrutto: parseFloat((product.price * currentQuantity).toFixed(2)),
-                taxRate: itemTaxRate,
-                stock: product.stock 
+                price: product.price,
+                quantity: quantityToAdd,
+                totalBrutto: quantityToAdd * product.price,
+                taxRate: product.taxRate || userSettings.taxRate // Fallback to settings
             });
         }
-
-        window.renderReceipt();
         
-        // Reset quantity after adding
-        currentQuantity = 1;
-        document.getElementById('quantity-display').innerText = currentQuantity;
+        // Update stock locally for immediate visual feedback
+        product.stock -= quantityToAdd;
+        window.renderProductGrid(currentBestellung[0]?.categoryId || null); // Re-render grid to update stock display
+
+        window.updateReceipt();
+        currentQuantity = 1; // Reset quantity after successful addition
+        window.updateQuantityDisplay();
+        window.showToast(`${quantityToAdd}x ${product.name} hinzugefügt.`, 'success');
     }
 
-    // NEU: Mengenbasierte Entfernung vom Bon
-    window.removeItem = function(index){
+    window.removeFromBestellung = function(index){
         const item = currentBestellung[index];
-        if(!item) return;
-
-        // Logik zur mengenbasierten Entfernung: Entferne maximal die aktuelle Menge oder die Menge am Bon
-        const quantityToRemove = Math.min(item.quantity, currentQuantity); 
-        
-        if (quantityToRemove >= item.quantity) {
-            // Gesamten Artikel entfernen
+        if (item) {
+             // Return stock
+            if (products[item.id]) {
+                products[item.id].stock += item.quantity;
+            }
             currentBestellung.splice(index, 1);
-            showToast(`${item.name} vollständig vom Bon entfernt.`, 'info');
-        } else {
-            // Nur einen Teil der Menge entfernen
-            item.quantity -= quantityToRemove;
-            item.totalBrutto = parseFloat((item.price * item.quantity).toFixed(2));
-            showToast(`${quantityToRemove}x ${item.name} vom Bon entfernt.`, 'info');
+            window.updateReceipt();
+            window.renderProductGrid(item.categoryId || null); // Re-render grid to update stock display
+            window.showToast(`Artikel entfernt.`, 'info');
         }
-
-        window.renderReceipt();
     }
 
     window.clearBestellung = function(){
-        currentBestellung = [];
-        totalBrutto = 0.00;
-        window.renderReceipt();
-        window.showToast('Bestellung geleert.', 'info');
-    }
-    
-    // ... (Existing calculation functions) ...
-
-    function calculateTaxSummary(){
-        // ... (existing logic) ...
-        let taxSummary = {};
-        let totalNetto = 0.00;
-        let totalTax = 0.00;
-        const fallbackTaxRate = userSettings.taxRate || 19.0;
-
-        currentBestellung.forEach(item => {
-            const itemTaxRate = item.taxRate || fallbackTaxRate;
-            const itemNetto = item.totalBrutto / (1 + itemTaxRate / 100);
-            const itemTax = item.totalBrutto - itemNetto;
-
-            totalNetto += itemNetto;
-            totalTax += itemTax;
-            
-            const rateKey = itemTaxRate.toFixed(1);
-            if (!taxSummary[rateKey]) {
-                taxSummary[rateKey] = { net: 0, tax: 0, gross: 0 };
-            }
-            taxSummary[rateKey].net += itemNetto;
-            taxSummary[rateKey].tax += itemTax;
-            taxSummary[rateKey].gross += item.totalBrutto;
-        });
-
-        return { 
-            totalNetto: parseFloat(totalNetto.toFixed(2)), 
-            totalTax: parseFloat(totalTax.toFixed(2)), 
-            taxSummary: taxSummary 
-        };
-    }
-
-    // MODIFIZIERT: renderReceipt (für TaxRate und Mengen-Löschung)
-    window.renderReceipt = function(forPrint = false, receiptType = 'standard', transactionId = null, transactionTimestamp = null){
-        // ... (existing logic) ...
-        totalBrutto = 0.00;
-        let totalNetto = 0.00;
-        let totalTax = 0.00;
-        let taxSummary = {};
-        const fallbackTaxRate = userSettings.taxRate || 19.0;
-        const container = forPrint ? document.getElementById('print-receipt-container') : document.getElementById('receipt-content-interactive');
-        let content = '';
-        const summaryData = calculateTaxSummary();
-        totalNetto = summaryData.totalNetto;
-        totalTax = summaryData.totalTax;
-        taxSummary = summaryData.taxSummary;
-        totalBrutto = currentBestellung.reduce((acc, item) => acc + item.totalBrutto, 0);
-
-
-        if(currentBestellung.length === 0){
-            container.innerHTML = '<p class="text-gray-500 text-center p-4">Es wurden noch keine Artikel gebucht.</p>';
-            document.getElementById('btn-finalize').disabled = true;
-            document.getElementById('total-display').innerText = `GESAMT: 0,00 €`;
-        } else {
-            document.getElementById('btn-finalize').disabled = false;
-
-            if(forPrint){
-                // ... (Print Receipt Header) ...
-                content += `<div class="text-center font-bold text-lg mb-1">${(userSettings.companyName||'Kassensystem').toUpperCase()}</div>`;
-                // ... (rest of print header and items) ...
-                currentBestellung.forEach((item, index) => {
-                    content += `<div class="line">
-                        <span class="item-name">${item.quantity}x ${item.name}</span>
-                        <span class="item-price">${item.totalBrutto.toFixed(2).replace('.', ',')} €</span>
-                    </div>`;
-                    content += `<div class="line text-xs font-normal text-right">
-                        <span></span>
-                        <span class="font-normal text-right">(${item.price.toFixed(2).replace('.', ',')} € / Stk. - ${item.taxRate.toFixed(0)}%)</span>
-                    </div>`;
-                });
-                // ... (Print Receipt Footer) ...
-                content += `<div class="separator"></div>
-                            <div class="line total-line"><span>GESAMT BRUTTO:</span><span>${totalBrutto.toFixed(2).replace('.', ',')} €</span></div>`;
-                
-                if(receiptType==='storno'){
-                    content += `<div class="line total-line text-red-700"><span>STORNO BETRAG:</span><span>-${totalBrutto.toFixed(2).replace('.', ',')} €</span></div>`;
+        if(currentBestellung.length === 0) return;
+        if(confirm('Möchten Sie den aktuellen Bon wirklich löschen?')){
+            // Return stock to products list
+            currentBestellung.forEach(item => {
+                if (products[item.id]) {
+                    products[item.id].stock += item.quantity;
                 }
-                
-                content += `<div class="separator"></div>`;
-                
-                // Detaillierte Steuer-Aufschlüsselung
-                content += `<div class="line text-sm mt-1"><span>Netto Gesamt:</span><span class="font-semibold">${totalNetto.toFixed(2).replace('.', ',')} €</span></div>`;
-                content += `<div class="line text-sm"><span>MwSt. Total:</span><span class="font-semibold">${totalTax.toFixed(2).replace('.', ',')} €</span></div>`;
-                content += `<div class="line text-xs font-bold mt-2"><span>Davon:</span><span></span></div>`;
-                Object.keys(taxSummary).sort().forEach(rate => {
-                    const summary = taxSummary[rate];
-                    if (summary.gross > 0.005) { 
-                        content += `<div class="line text-xs"><span>- Netto ${rate.replace('.', ',')}%:</span><span class="font-semibold">${summary.net.toFixed(2).replace('.', ',')} €</span></div>`;
-                        content += `<div class="line text-xs"><span>- MwSt. ${rate.replace('.', ',')}%:</span><span class="font-semibold">${summary.tax.toFixed(2).replace('.', ',')} €</span></div>`;
-                    }
-                });
-                // ... (rest of print footer) ...
-            } else {
-                // ... (Interactive Receipt Content) ...
-                currentBestellung.forEach((item, index) => {
-                    content += `
-                        <div class="flex justify-between items-center p-2 rounded-lg bg-red-50 hover:bg-red-100 cursor-pointer" onclick="window.removeItem(${index})">
-                            <span class="text-sm font-semibold">${item.quantity}x ${item.name}</span>
-                            <span class="text-base font-extrabold text-red-700">${item.totalBrutto.toFixed(2).replace('.', ',')} €</span>
-                        </div>
-                    `;
-                });
-                // ... (Interactive Receipt Footer) ...
-                document.getElementById('total-display').innerText = `GESAMT: ${totalBrutto.toFixed(2).replace('.', ',')} €`;
-            }
-            container.innerHTML = content;
+            });
+
+            currentBestellung = [];
+            window.updateReceipt();
+            window.renderProductGrid();
+            window.showToast('Bon gelöscht.', 'info');
         }
     }
 
-    // NEU HINZUGEFÜGT (FEHLTE IM VORHERIGEN CODE)
-    window.printReceipt = async function(receiptType, transactionId = null, transactionTimestamp = null){
-        const printContainer = document.getElementById('print-receipt-container');
-        window.renderReceipt(true, receiptType, transactionId, transactionTimestamp);
-        
-        printContainer.style.display = 'block'; 
-        printContainer.style.visibility = 'visible'; 
 
-        // KORREKTUR: Erhöhter Delay für stabileren Druck (1500ms)
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
+    // ---------- Finalize / Payment ----------
 
-        window.print();
-
-        setTimeout(() => {
-            printContainer.innerHTML = '';
-            printContainer.style.display = 'none';
-            printContainer.style.visibility = 'hidden';
-        }, 1500); // KORREKTUR: Gleicher Delay für Aufräumarbeiten
-    }
-
-    // MODIFIZIERT: printCancellationReceipt (Delay korrigiert)
-    window.printCancellationReceipt = async function(transaction){
-        const originalBestellung = currentBestellung;
-        currentBestellung = transaction.items; // Temporär die Bon-Items setzen
-
-        const printContainer = document.getElementById('print-receipt-container');
-
-        // Render content into the hidden container as 'storno' type
-        const cancellationTime = transaction.cancellationTimestamp || { seconds: Math.floor(Date.now() / 1000) }; 
-        window.renderReceipt(true, 'storno', transaction.id, cancellationTime);
-
-        // Force visibility and display temporarily to aid rendering
-        printContainer.style.display = 'block'; 
-        printContainer.style.visibility = 'visible'; 
-
-        // KORREKTUR: Erhöhter Delay für stabileren Druck (1500ms)
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
-
-        // 3. Trigger print
-        window.print();
-
-        // 4. Aufräumarbeiten des Druck-Containers leicht verzögern
-        setTimeout(() => {
-            printContainer.innerHTML = ''; // Clean up print content
-            printContainer.style.display = 'none';
-            printContainer.style.visibility = 'hidden';
-        }, 1500); // KORREKTUR: Gleicher Delay für Aufräumarbeiten
-
-        // 5. Restore original state
-        currentBestellung = originalBestellung;
-        window.renderReceipt(); // Re-render the interactive receipt if needed
-    } 
-
-    // ---------- Finalize Modal (Payment) (unchanged) ----------
-    window.openFinalizeModal = function(){
-        // ... (existing logic) ...
-        if(currentBestellung.length === 0){ window.showToast('Bitte Artikel buchen.', 'error'); return; }
-        window.renderReceipt(false); 
+    window.openFinalizeModal = function(isUpdate = false){
+        if(!isUpdate) {
+            document.getElementById('finalize-modal').style.display='flex';
+            window.toggleReceiptColumn(false);
+        }
         document.getElementById('finalize-total').innerText = totalBrutto.toFixed(2).replace('.', ',') + ' €';
-        cashReceivedInput = '0';
-        document.getElementById('cash-received-display').innerText = '0,00';
-        document.getElementById('change-display').innerText = '0,00 €';
-        window.setPaymentMethod('BAR');
-        document.getElementById('finalize-modal').style.display='flex';
+        window.setPaymentMethod(cashPaymentMethod); // Reset state and re-apply
     }
 
-    // ... (existing cash input functions) ...
-    window.setPaymentMethod = function(method) {
+    window.setPaymentMethod = function(method){
         cashPaymentMethod = method;
-        document.getElementById('cash-payment-area').style.display = method === 'BAR' ? 'block' : 'none';
-        document.getElementById('btn-bar-indicator').style.display = method === 'BAR' ? 'inline-block' : 'none';
-        document.getElementById('cash-finalize-buttons').style.display = method === 'BAR' ? 'block' : 'none';
-        document.getElementById('card-finalize-buttons').style.display = method === 'KARTE' ? 'block' : 'none';
-    };
-
-    window.handleCashInput = function(input) {
-        // ... (implementiert) ...
-        const maxDigits = 10;
-        let currentStr = document.getElementById('cash-received-display').innerText.replace(/[\.,]/g, '');
-        
-        if (input === 'clear') {
-            currentStr = '0';
-        } else if (input === 'dot') {
-            input = '0'; 
-        } 
-        
-        if(input !== 'clear') {
-            if (currentStr === '0') {
-                currentStr = input;
-            } else if (currentStr.length < maxDigits) {
-                currentStr += input;
-            }
+        if(method === 'BAR'){
+            document.getElementById('btn-bar-indicator').style.display='inline-block';
+            document.getElementById('btn-karte').classList.remove('bg-red-700');
+            document.getElementById('btn-karte').classList.add('bg-indigo-600');
+            
+            document.getElementById('cash-payment-area').style.display='block';
+            document.getElementById('cash-finalize-buttons').style.display='block';
+            document.getElementById('card-finalize-buttons').style.display='none';
+            
+            window.updateCashChangeDisplay(); // Update display for BAR
+        } else if (method === 'KARTE'){
+            document.getElementById('btn-bar-indicator').style.display='none';
+            document.getElementById('btn-karte').classList.remove('bg-indigo-600');
+            document.getElementById('btn-karte').classList.add('bg-red-700');
+            
+            document.getElementById('cash-payment-area').style.display='none';
+            document.getElementById('cash-finalize-buttons').style.display='none';
+            document.getElementById('card-finalize-buttons').style.display='block';
         }
-        
-        while(currentStr.length < 3) {
-            currentStr = '0' + currentStr;
-        }
+    }
 
-        let formattedStr = currentStr.slice(0, -2) + '.' + currentStr.slice(-2);
-
-        if(formattedStr.startsWith('0') && formattedStr.length > 4 && formattedStr.charAt(1) !== '.') {
-            formattedStr = formattedStr.substring(1);
-        }
-        
-        cashReceivedInput = formattedStr;
-        window.updateChangeDisplay();
-    };
-
-    window.updateChangeDisplay = function() {
+    window.updateCashChangeDisplay = function(){
+        const received = parseFloat(cashReceivedInput) / 100;
         const total = totalBrutto;
-        const received = parseFloat(cashReceivedInput) || 0;
         const change = received - total;
 
-        document.getElementById('cash-received-display').innerText = received.toFixed(2).replace('.', ',');
+        document.getElementById('cash-received-display').innerText = (received).toFixed(2).replace('.', ',');
         document.getElementById('change-display').innerText = change >= 0 ? change.toFixed(2).replace('.', ',') + ' €' : '0,00 €';
 
-        const buttonsToEnable = change >= 0 && change.toFixed(2) >= 0;
-        document.getElementById('btn-cash-none').disabled = !buttonsToEnable;
-        document.getElementById('btn-cash-standard').disabled = !buttonsToEnable;
-        document.getElementById('btn-cash-bewirtung').disabled = !buttonsToEnable;
-    };
+        const buttonsEnabled = received >= total;
+        document.getElementById('btn-cash-none').disabled = !buttonsEnabled;
+        document.getElementById('btn-cash-standard').disabled = !buttonsEnabled;
+        document.getElementById('btn-cash-bewirtung').disabled = !buttonsEnabled;
 
-    window.setCashExact = function() {
-        if (totalBrutto > 0) {
-            cashReceivedInput = totalBrutto.toFixed(2);
-            window.updateChangeDisplay();
+        // Visual feedback
+        const btnBg = buttonsEnabled ? 'bg-green-600' : 'bg-green-400';
+        const btnBgRed = buttonsEnabled ? 'bg-red-700' : 'bg-red-400';
+        document.getElementById('btn-cash-standard').className = `p-3 rounded-xl font-extrabold text-white ${btnBg}`;
+        document.getElementById('btn-cash-none').className = `p-3 rounded-xl font-extrabold text-white bg-gray-500 ${!buttonsEnabled ? 'opacity-50' : ''}`;
+        document.getElementById('btn-cash-bewirtung').className = `p-3 rounded-xl font-extrabold text-white ${btnBgRed}`;
+    }
+
+    window.handleCashInput = function(key){
+        if(key === 'clear'){
+            cashReceivedInput = '0';
+        } else if (key === 'dot'){
+            if (!cashReceivedInput.includes('.')){
+                // Not needed since we handle cents implicitly
+            }
+        } else if (key.match(/^\d$/)){
+            if (cashReceivedInput === '0') {
+                cashReceivedInput = key;
+            } else if (cashReceivedInput.length < 9) { // Limit to 7 digits + 2 cents (e.g., 99999.99)
+                 cashReceivedInput += key;
+            }
         }
-    };
-
-    window.addCashShortcut = function(amount) {
-        let received = parseFloat(cashReceivedInput) || 0;
-        received += amount;
-        cashReceivedInput = received.toFixed(2);
-        window.updateChangeDisplay();
-    };
-
-    // MODIFIZIERT: handleFinalizeAction (STOCK REDUCTION & CASHBOX UPDATE)
-    window.handleFinalizeAction = async function(method, receiptType){
-        if(!currentUser || currentBestellung.length === 0) return;
+        // Ensure it's a number string with implicit two decimals, e.g., '123' means 1.23
+        if (cashReceivedInput.length > 2) {
+             const str = cashReceivedInput.slice(0, -2) + ',' + cashReceivedInput.slice(-2);
+             document.getElementById('cash-received-display').innerText = str.replace(/,(\d)$/, ',$1').replace(/,,/, ','); // Display format
+        } else if (cashReceivedInput.length === 2) {
+             document.getElementById('cash-received-display').innerText = '0,' + cashReceivedInput;
+        } else if (cashReceivedInput.length === 1) {
+             document.getElementById('cash-received-display').innerText = '0,0' + cashReceivedInput;
+        }
         
-        if(method === 'BAR'){
-            const received = parseFloat(cashReceivedInput) || 0;
+        window.updateCashChangeDisplay();
+    }
+
+    window.setCashExact = function(){
+        const totalCents = Math.round(totalBrutto * 100);
+        cashReceivedInput = String(totalCents);
+        window.handleCashInput(''); // Force update display
+    }
+
+    window.addCashShortcut = function(amount){
+         const received = parseFloat(cashReceivedInput) / 100;
+         const newReceived = received + amount;
+         cashReceivedInput = String(Math.round(newReceived * 100));
+         window.handleCashInput(''); // Force update display
+    }
+
+    window.handleFinalizeAction = async function(paymentMethod, receiptType){
+        if(paymentMethod === 'BAR'){
+            const received = parseFloat(cashReceivedInput) / 100;
             if(received < totalBrutto){
                 window.showToast('Der erhaltene Betrag ist zu gering.', 'error');
                 return;
@@ -1394,593 +1369,567 @@
         }
 
         window.showLoading(true);
-
         try{
-            const summary = calculateTaxSummary();
-            const transaction = {
-                items: currentBestellung,
+            const transactionRef = transactionsCollectionRef(currentUser.uid);
+            
+            // 1. Transaction speichern
+            const transactionData = {
+                items: currentBestellung.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    totalBrutto: item.totalBrutto,
+                    taxRate: item.taxRate
+                })),
                 totalBrutto: totalBrutto,
-                taxSummary: summary.taxSummary, 
-                paymentMethod: method,
-                isCancelled: false,
-                timestamp: serverTimestamp()
+                paymentMethod: paymentMethod,
+                timestamp: serverTimestamp(),
+                date: new Date().toISOString().split('T')[0],
+                status: 'completed',
             };
+            const newTransactionRef = await addDoc(transactionRef, transactionData);
             
-            // 1. STOCK REDUCTION (NEU)
-            const productsToUpdate = [];
-            for (const item of currentBestellung) {
-                const product = products[item.id];
-                if (product && product.stock !== undefined) {
-                    const newStock = product.stock - item.quantity;
-                    if (newStock < 0) {
-                        // Notfall-Check, sollte nicht passieren
-                        throw new Error(`Negative Bestand für ${item.name} (${newStock}). Abbruch.`);
-                    }
-                    productsToUpdate.push({ id: item.id, newStock: newStock });
-                }
-            }
-            
-            // 2. CASHBOX UPDATE (NEU)
-            let newCashBoxBalance = cashBoxBalance;
-            if (method === 'BAR') {
-                newCashBoxBalance += totalBrutto; 
-            }
-
-            // 3. Save Transaction
-            const tRef = await addDoc(transactionsCollectionRef(currentUser.uid), transaction);
-
-            // 4. Update Stock in Firestore
-            const stockUpdates = productsToUpdate.map(p => {
-                const prodRef = doc(productsCollectionRef(currentUser.uid), p.id);
-                return updateDoc(prodRef, { stock: p.newStock });
-            });
-            await Promise.all(stockUpdates);
-
-            // 5. Update CashBoxBalance in Firestore (if BAR payment)
-            if (method === 'BAR') {
+            // 2. Kassenstand aktualisieren (nur bei Barzahlung)
+            if(paymentMethod === 'BAR'){
+                cashBoxBalance += totalBrutto;
                 const sRef = settingsDocRef(currentUser.uid);
-                await updateDoc(sRef, { cashBoxBalance: newCashBoxBalance });
-                cashBoxBalance = newCashBoxBalance; // Globale Variable aktualisieren
+                await updateDoc(sRef, { cashBoxBalance: cashBoxBalance });
             }
 
-            // 6. Print Receipt
+            // 3. Bestand im Produkt aktualisieren (Bereits lokal gemacht, jetzt persistent speichern)
+            const updateProductPromises = currentBestellung.map(item => {
+                 const product = products[item.id];
+                 if(product) {
+                    const pRef = doc(productsCollectionRef(currentUser.uid), item.id);
+                    return updateDoc(pRef, { stock: product.stock });
+                 }
+                 return Promise.resolve();
+            });
+            await Promise.all(updateProductPromises);
+
+            // 4. Bon drucken (falls gewünscht)
             if(receiptType !== 'none'){
-                await window.printReceipt(receiptType, tRef.id, transaction.timestamp);
+                window.printReceipt(currentBestellung, totalBrutto, receiptType, userSettings);
             }
-
-            // 7. Clear state and close modal
-            currentBestellung = [];
-            totalBrutto = 0.00;
-            window.renderReceipt(); // Render empty receipt
-            window.closeModal('finalize-modal');
             
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
-            window.showToast('Transaktion abgeschlossen.', 'success');
+            // 5. Reset UI
+            window.showToast('Transaktion erfolgreich abgeschlossen.', 'success');
+            closeModal('finalize-modal');
+            currentBestellung = [];
+            currentQuantity = 1;
+            window.updateReceipt();
+            window.updateQuantityDisplay();
+            window.renderProductGrid(); 
+            window.loadTransactionHistory(); // Reload history for storno
+            document.getElementById('cash-balance-display').innerText = cashBoxBalance.toFixed(2).replace('.', ',') + ' €'; // Update cash balance display
+            
         } catch(err){
             console.error(err);
             window.showToast('Fehler beim Abschließen der Transaktion.', 'error');
-        } finally { window.showLoading(false); }
-    }
-
-    // ---------- Storno der letzten Transaktion (KORRIGIERT: STOCK RETURN LOGIC) ----------
-    window.cancelLastTransaction = async function(){
-        if(!currentUser) return;
-
-        window.showLoading(true);
-        try{
-            // Query for the single most recent, non-cancelled transaction
-            const q = query(
-                transactionsCollectionRef(currentUser.uid),
-                where('isCancelled', '==', false),
-                orderBy('timestamp', 'desc'),
-                limit(1)
-            );
-
-            const querySnapshot = await getDocs(q);
-            if(querySnapshot.empty){
-                window.showToast('Keine letzte, nicht stornierte Transaktion gefunden.', 'info');
-                window.showLoading(false);
-                return;
-            }
-
-            const docSnapshot = querySnapshot.docs[0];
-            const transaction = { id: docSnapshot.id, ...docSnapshot.data() };
-
-            const confirmationMessage = `Soll Transaktion ${transaction.id.substring(0, 8)}... \n(Gesamt: ${transaction.totalBrutto.toFixed(2).replace('.', ',')} €) \nwirklich storniert werden?`;
-
-            if(!confirm(confirmationMessage)) {
-                window.showLoading(false);
-                return;
-            }
-
-            // KORREKTUR 1: STOCK RETURN - Aktuellen Bestand vor dem Update lesen
-            for (const item of transaction.items) {
-                const prodRef = doc(productsCollectionRef(currentUser.uid), item.id);
-                const prodSnap = await getDoc(prodRef); 
-                if (prodSnap.exists()) {
-                    const currentStock = prodSnap.data().stock || 0;
-                    const newStock = currentStock + item.quantity;
-                    await updateDoc(prodRef, { stock: newStock }); 
-                }
-            }
-            
-            // 2. CASHBOX UPDATE (NEU)
-            let newCashBoxBalance = cashBoxBalance;
-            if (transaction.paymentMethod === 'BAR') {
-                newCashBoxBalance -= transaction.totalBrutto; // Abzug des Bruttobetrags
-                
-                const sRef = settingsDocRef(currentUser.uid);
-                await updateDoc(sRef, { cashBoxBalance: newCashBoxBalance });
-                cashBoxBalance = newCashBoxBalance; // Globale Variable aktualisieren
-            }
-
-            // 3. STORNOBON DRUCKEN
-            await window.printCancellationReceipt(transaction); 
-
-            // 4. Update document to mark as cancelled
-            const tRef = doc(transactionsCollectionRef(currentUser.uid), transaction.id);
-            await updateDoc(tRef, { 
-                isCancelled: true,
-                cancellationTimestamp: serverTimestamp() 
-            });
-
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
-            window.loadTransactionHistory(); // Transaktionshistorie neu laden
-
-            window.showToast('Transaktion erfolgreich storniert.', 'success');
-
-        } catch(err){
-            console.error('Cancellation error', err);
-            window.showToast('Fehler beim Stornieren der Transaktion.', 'error');
-        } finally { window.showLoading(false); }
-    }
-    
-    // ... (Existing report/transaction history functions) ...
-
-    window.loadTransactionHistory = async function(){
-        const dateInput = document.getElementById('report-date').value;
-        if(!dateInput) { return; }
-
-        const selectedDate = new Date(dateInput);
-        selectedDate.setHours(0, 0, 0, 0); 
-        const nextDay = new Date(selectedDate);
-        nextDay.setDate(selectedDate.getDate() + 1);
-
-        const startOfDay = Timestamp.fromDate(selectedDate);
-        const endOfDay = Timestamp.fromDate(nextDay);
-        
-        const q = query(
-            transactionsCollectionRef(currentUser.uid),
-            where('timestamp', '>=', startOfDay),
-            where('timestamp', '<', endOfDay),
-            orderBy('timestamp', 'desc')
-        );
-        
-        window.showLoading(true);
-        try {
-            const querySnapshot = await getDocs(q);
-            transactionHistory = querySnapshot.docs.map(doc => ({ 
-                id: doc.id, 
-                ...doc.data(), 
-                timestamp: doc.data().timestamp.toDate().toLocaleString() // Timestamp zu lesbarem String konvertieren
-            }));
-            
-            const listContainer = document.getElementById('transaction-list');
-            listContainer.innerHTML = '';
-
-            if (transactionHistory.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-500 text-center p-4">Keine Transaktionen für diesen Tag gefunden.</p>';
-                return;
-            }
-
-            transactionHistory.forEach((t, index) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = `p-2 border rounded-lg mb-2 flex justify-between items-center ${t.isCancelled ? 'bg-red-100' : 'bg-green-50'}`;
-                
-                const statusText = t.isCancelled ? 'STORNIERT' : 'ABGESCHLOSSEN';
-                const buttonHtml = t.isCancelled 
-                    ? `<span class="text-red-700 font-bold">${statusText}</span>`
-                    : `<button onclick="window.handleReversal('${t.id}', ${index})" class="p-1 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700">Stornieren</button>`;
-
-                itemDiv.innerHTML = `
-                    <div class="flex flex-col text-sm">
-                        <span class="font-bold">${t.totalBrutto.toFixed(2).replace('.', ',')} € (${t.paymentMethod})</span>
-                        <span class="text-xs text-gray-500">${t.timestamp}</span>
-                    </div>
-                    ${buttonHtml}
-                `;
-                listContainer.appendChild(itemDiv);
-            });
-
-        } catch (err) {
-            console.error("Error loading history:", err);
-            window.showToast('Fehler beim Laden der Transaktionshistorie.', 'error');
         } finally {
             window.showLoading(false);
         }
     }
 
 
-    // MODIFIZIERT: handleReversal (KORRIGIERT: STOCK RETURN LOGIC)
-    window.handleReversal = async function(transactionId, index){
-        if(!currentUser) return;
-        const transaction = transactionHistory[index];
-        if(!transaction) return;
-
-        if(!confirm(`Transaktion ${transaction.id.substring(0, 8)}... (Gesamt: ${transaction.totalBrutto.toFixed(2).replace('.', ',')} €) wirklich stornieren?`)) return;
-
-        window.showLoading(true);
-        
-        try{
-            // KORREKTUR 1: STOCK RETURN - Aktuellen Bestand vor dem Update lesen
-            for (const item of transaction.items) {
-                const prodRef = doc(productsCollectionRef(currentUser.uid), item.id);
-                const prodSnap = await getDoc(prodRef); 
-                if (prodSnap.exists()) {
-                    const currentStock = prodSnap.data().stock || 0;
-                    const newStock = currentStock + item.quantity;
-                    await updateDoc(prodRef, { stock: newStock }); 
-                }
-            }
-            
-            // 2. CASHBOX UPDATE 
-            let newCashBoxBalance = cashBoxBalance;
-            if (transaction.paymentMethod === 'BAR') {
-                newCashBoxBalance -= transaction.totalBrutto;
-                
-                const sRef = settingsDocRef(currentUser.uid);
-                await updateDoc(sRef, { cashBoxBalance: newCashBoxBalance });
-                cashBoxBalance = newCashBoxBalance;
-            }
-
-            // 3. STORNOBON DRUCKEN
-            await window.printCancellationReceipt(transaction); 
-            
-            // 4. Update document to mark as cancelled
-            const tRef = doc(transactionsCollectionRef(currentUser.uid), transactionId);
-            await updateDoc(tRef, { 
-                isCancelled: true,
-                cancellationTimestamp: serverTimestamp() 
-            });
-
-            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
-            window.loadTransactionHistory(); 
-            window.showToast('Transaktion erfolgreich storniert.', 'success');
-
-        } catch(err){
-            console.error('Reversal error', err);
-            window.showToast('Fehler beim Stornieren der Transaktion.', 'error');
-        } finally { window.showLoading(false); }
-    }
-
-    // MODIFIZIERT: runDailyReport (um Cash-Transaktionen einzubeziehen)
-    window.runDailyReport = async function(outputType){
-        // ... (existing logic) ...
-        window.showLoading(true);
-        const dateInput = document.getElementById('report-date').value;
-        if(!dateInput) { window.showToast('Bitte ein Datum wählen.', 'error'); return; }
-
-        const selectedDate = new Date(dateInput);
-        selectedDate.setHours(0, 0, 0, 0); // Start of day 
-        
-        const nextDay = new Date(selectedDate);
-        nextDay.setDate(selectedDate.getDate() + 1);
-
-        const startOfDay = Timestamp.fromDate(selectedDate);
-        const endOfDay = Timestamp.fromDate(nextDay);
-        
-        const q = query(
-            transactionsCollectionRef(currentUser.uid),
-            where('timestamp', '>=', startOfDay),
-            where('timestamp', '<', endOfDay),
-            orderBy('timestamp', 'asc')
-        );
-        
-        const querySnapshot = await getDocs(q);
-        const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // NEU: Cash-Transaktionen für den Berichtstag laden
-        const cashQuery = query(
-            cashTransactionsCollectionRef(currentUser.uid),
-            where('timestamp', '>=', startOfDay),
-            where('timestamp', '<', endOfDay),
-            orderBy('timestamp', 'asc')
-        );
-        const cashQuerySnapshot = await getDocs(cashQuery);
-        const cashTransactions = cashQuerySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        let totalGross = 0;
-        let totalNet = 0;
-        let totalTax = 0;
-        let paymentTotals = { 'BAR': 0, 'KARTE': 0 };
-        let productSummary = {};
-        let reportTaxSummary = {}; // Globale Steuerzusammenfassung für den Report
-        
-        transactions.filter(t => !t.isCancelled).forEach(t => {
-            totalGross += t.totalBrutto;
-            
-            // NEU: Anstatt manueller Berechnung, die gespeicherte Tax Summary nutzen
-            const txTaxSummary = t.taxSummary || {}; 
-            
-            Object.keys(txTaxSummary).forEach(rateKey => {
-                const summary = txTaxSummary[rateKey];
-                
-                // Initialisierung, falls neuer Steuersatz im Report auftaucht
-                if (!reportTaxSummary[rateKey]) {
-                    reportTaxSummary[rateKey] = { net: 0, tax: 0, gross: 0 };
-                }
-                
-                reportTaxSummary[rateKey].net += summary.net;
-                reportTaxSummary[rateKey].tax += summary.tax;
-                reportTaxSummary[rateKey].gross += summary.gross;
-            });
-            
-            paymentTotals[t.paymentMethod] = (paymentTotals[t.paymentMethod] || 0) + t.totalBrutto;
-            
-            t.items.forEach(item => {
-                if (!productSummary[item.name]) {
-                    productSummary[item.name] = { quantity: 0, gross: 0 };
-                }
-                productSummary[item.name].quantity += item.quantity;
-                productSummary[item.name].gross += item.totalBrutto;
-            });
-        });
-
-        // Berechne Gesamt-Netto und Gesamt-Steuer aus der neuen Zusammenfassung
-        Object.keys(reportTaxSummary).forEach(rateKey => {
-            totalNet += reportTaxSummary[rateKey].net;
-            totalTax += reportTaxSummary[rateKey].tax;
-            
-            // Runden der Einzelwerte für den Report
-            reportTaxSummary[rateKey].net = parseFloat(reportTaxSummary[rateKey].net.toFixed(2));
-            reportTaxSummary[rateKey].tax = parseFloat(reportTaxSummary[rateKey].tax.toFixed(2));
-            reportTaxSummary[rateKey].gross = parseFloat(reportTaxSummary[rateKey].gross.toFixed(2));
-        });
-
-        // NEU: Cash Management Report Data
-        let totalEinlage = 0;
-        let totalEntnahme = 0;
-        
-        cashTransactions.forEach(t => {
-            if (t.type === 'EINLAGE') {
-                totalEinlage += t.amount;
-            } else if (t.type === 'ENTNAHME') {
-                totalEntnahme += t.amount;
-            }
-        });
-
-        // ... (HTML Report Generation) ...
-
-        let reportHtml = `<div class="receipt-print">
-            <div class="text-center font-bold text-lg mb-1">${(userSettings.companyName||'Kassensystem').toUpperCase()}</div>
-            <div class="text-center text-sm mb-4">Tagesabschluss vom ${selectedDate.toLocaleDateString()}</div>
-            <div class="separator"></div>`;
-
-        const line = (label, value) => `<div class="line text-base"><span>${label}:</span><span class="font-bold">${value}</span></div>`;
-        const lineBreak = `<div class="separator"></div>`;
-
-        reportHtml += `<div class="text-lg font-bold mt-2">Gesamtsummen (Nicht storniert)</div>`;
-        reportHtml += line(`Bruttoumsatz`, `${totalGross.toFixed(2).replace('.', ',')} €`);
-        reportHtml += line(`Nettoumsatz (Gesamt)`, `${totalNet.toFixed(2).replace('.', ',')} €`);
-        reportHtml += line(`MwSt. (Gesamt)`, `${totalTax.toFixed(2).replace('.', ',')} €`);
-
-        reportHtml += lineBreak;
-        reportHtml += `<div class="text-lg font-bold mt-2">Umsatz nach Steuersatz</div>`;
-
-        // NEU: Ausgabe der Steuer-Zusammenfassung
-        Object.keys(reportTaxSummary).sort().forEach(rateKey => {
-            const summary = reportTaxSummary[rateKey];
-            if (summary.gross > 0.005) { // Nur anzeigen, wenn Umsatz existiert
-                reportHtml += `<div class="line text-sm mt-1"><span>Brutto ${rateKey} %:</span><span class="font-semibold">${summary.gross.toFixed(2).replace('.', ',')} €</span></div>`;
-                reportHtml += `<div class="line text-xs"><span>- Netto ${rateKey} %:</span><span class="font-semibold">${summary.net.toFixed(2).replace('.', ',')} €</span></div>`;
-                reportHtml += `<div class="line text-xs"><span>- MwSt. ${rateKey} %:</span><span class="font-semibold">${summary.tax.toFixed(2).replace('.', ',')} €</span></div>`;
-            }
-        });
-        
-        reportHtml += lineBreak;
-        reportHtml += `<div class="text-lg font-bold mt-2">Umsatz nach Zahlungsart</div>`;
-        reportHtml += line(`BAR`, `${paymentTotals.BAR.toFixed(2).replace('.', ',')} €`);
-        reportHtml += line(`KARTE`, `${paymentTotals.KARTE.toFixed(2).replace('.', ',')} €`);
-
-        reportHtml += lineBreak;
-        reportHtml += `<div class="text-lg font-bold mt-2 text-indigo-700">Kassenverwaltung (${selectedDate.toLocaleDateString()})</div>`;
-        reportHtml += line(`Geld Einlage (+):`, `+${totalEinlage.toFixed(2).replace('.', ',')} €`);
-        reportHtml += line(`Geld Entnahme (-):`, `-${totalEntnahme.toFixed(2).replace('.', ',')} €`);
-        
-        // Final Cash Balance (From Settings)
-        await window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
-        reportHtml += lineBreak;
-        reportHtml += `<div class="line total-line border-t-2 border-indigo-700 pt-2"><span>Aktueller Kassenstand (System):</span><span>${cashBoxBalance.toFixed(2).replace('.', ',')} €</span></div>`;
-
-        reportHtml += lineBreak;
-        reportHtml += `<div class="text-lg font-bold mt-2">Verkaufte Produkte (Anzahl/Umsatz)</div>`;
-        Object.keys(productSummary).sort().forEach(name => {
-            const summary = productSummary[name];
-            reportHtml += `<div class="line text-sm"><span>${summary.quantity}x ${name}</span><span class="font-semibold">${summary.gross.toFixed(2).replace('.', ',')} €</span></div>`;
-        });
-        
-        reportHtml += lineBreak;
-        reportHtml += `<div class="text-center text-sm mt-4">Berichtszeit: ${new Date().toLocaleString()}</div>
-                       <div class="separator"></div>
-                       </div>`;
-
-        // Ausgabe auf Bildschirm oder Export
-        if (outputType === 'report') {
-            document.getElementById('screen-report-content').innerHTML = reportHtml;
-        } else if (outputType === 'csv') {
-            // ... (CSV export logic) ...
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += `Berichtsdatum,${selectedDate.toLocaleDateString()}\n`;
-            csvContent += `Bruttoumsatz,${totalGross.toFixed(2).replace('.', ',')} €\n`;
-            csvContent += `Nettoumsatz,${totalNet.toFixed(2).replace('.', ',')} €\n`;
-            csvContent += `MwSt. Gesamt,${totalTax.toFixed(2).replace('.', ',')} €\n\n`;
-
-            csvContent += "Zahlungsart,Umsatz\n";
-            csvContent += `BAR,${paymentTotals.BAR.toFixed(2).replace('.', ',')} €\n`;
-            csvContent += `KARTE,${paymentTotals.KARTE.toFixed(2).replace('.', ',')} €\n\n`;
-
-            csvContent += "Kassenverwaltung\n";
-            csvContent += `Einlage,${totalEinlage.toFixed(2).replace('.', ',')} €\n`;
-            csvContent += `Entnahme,${totalEntnahme.toFixed(2).replace('.', ',')} €\n`;
-            csvContent += `Aktueller Kassenstand (System),${cashBoxBalance.toFixed(2).replace('.', ',')} €\n\n`;
-
-            csvContent += "Steuersatz,Netto,MwSt.,Brutto\n";
-            Object.keys(reportTaxSummary).sort().forEach(rateKey => {
-                const summary = reportTaxSummary[rateKey];
-                if (summary.gross > 0.005) { 
-                    csvContent += `${rateKey}%,${summary.net.toFixed(2).replace('.', ',')} €,${summary.tax.toFixed(2).replace('.', ',')} €,${summary.gross.toFixed(2).replace('.', ',')} €\n`;
-                }
-            });
-            csvContent += "\n";
-
-            csvContent += "Produkt,Anzahl,Umsatz\n";
-            Object.keys(productSummary).sort().forEach(name => {
-                const summary = productSummary[name];
-                csvContent += `${name},${summary.quantity},${summary.gross.toFixed(2).replace('.', ',')} €\n`;
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Tagesabschluss_${selectedDate.toLocaleDateString()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.showToast('CSV Export abgeschlossen.', 'success');
-        }
-        
-        window.showLoading(false);
+    // ---------- Cash Management (Einlage/Entnahme) ----------
+    window.openCashManagementModal = function(){
+        document.getElementById('cash-management-modal').style.display='flex';
+        document.getElementById('cash-balance-display').innerText = cashBoxBalance.toFixed(2).replace('.', ',') + ' €';
+        cashReceivedInput = '0'; // Use this for the amount input
+        document.getElementById('cash-man-received-display').innerText = '0,00';
+        window.toggleReceiptColumn(false);
     }
     
-    // ---------- Cash Management Logic (NEU) ----------
-
-    window.updateCashManDisplay = function() {
-        const received = parseFloat(cashManInput) || 0;
-        document.getElementById('cash-man-received-display').innerText = received.toFixed(2).replace('.', ',');
-    }
-
-    window.handleCashManInput = function(input) {
-        const maxDigits = 10;
-        let currentStr = document.getElementById('cash-man-received-display').innerText.replace(/[\.,]/g, '');
-        
-        if (input === 'clear') {
-            currentStr = '0';
-        } else if (input === 'dot') {
-            // Mit dieser Logik wird der Dezimalpunkt automatisch gesetzt, der Button fügt nur eine 0 hinzu, wenn er "geklickt" wird.
-            input = '0'; 
-        } 
-        
-        // Zifferneingabe
-        if(input !== 'clear') {
-            if (currentStr === '0') {
-                currentStr = input;
-            } else if (currentStr.length < maxDigits) {
-                currentStr += input;
+    // Uses the cashReceivedInput state for amount
+    window.handleCashManInput = function(key){
+         if(key === 'clear'){
+            cashReceivedInput = '0';
+        } else if (key.match(/^\d$/)){
+            if (cashReceivedInput === '0') {
+                cashReceivedInput = key;
+            } else if (cashReceivedInput.length < 9) { 
+                 cashReceivedInput += key;
             }
         }
-        
-        // Format back to EUR (always 2 decimals)
-        while(currentStr.length < 3) {
-            currentStr = '0' + currentStr;
-        }
-
-        let formattedStr = currentStr.slice(0, -2) + '.' + currentStr.slice(-2);
-
-        // Remove leading zeros, unless it's just '0.xx'
-        if(formattedStr.startsWith('0') && formattedStr.length > 4 && formattedStr.charAt(1) !== '.') {
-            formattedStr = formattedStr.substring(1);
-        }
-        
-        cashManInput = formattedStr;
-        window.updateCashManDisplay();
-    }
-
-    window.openCashManagementModal = async function() {
-        if (!currentUser) return;
-        window.showLoading(true);
-        try {
-            await window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
-            document.getElementById('cash-balance-display').innerText = cashBoxBalance.toFixed(2).replace('.', ',') + ' €';
-            
-            cashManInput = '0.00'; // Reset input
-            window.updateCashManDisplay();
-            
-            document.getElementById('cash-management-modal').style.display = 'flex';
-            window.toggleReceiptColumn(false);
-        } catch(e) {
-            window.showToast('Fehler beim Laden des Kassenstands.', 'error');
-        } finally {
-            window.showLoading(false);
+        // Ensure it's a number string with implicit two decimals
+        if (cashReceivedInput.length > 2) {
+             const str = cashReceivedInput.slice(0, -2) + ',' + cashReceivedInput.slice(-2);
+             document.getElementById('cash-man-received-display').innerText = str.replace(/,(\d)$/, ',$1').replace(/,,/, ',');
+        } else if (cashReceivedInput.length === 2) {
+             document.getElementById('cash-man-received-display').innerText = '0,' + cashReceivedInput;
+        } else if (cashReceivedInput.length === 1) {
+             document.getElementById('cash-man-received-display').innerText = '0,0' + cashReceivedInput;
         }
     }
 
-    window.handleCashManagement = async function(type) {
+    window.handleCashManagement = async function(type){
         if (!currentUser) return;
-        window.showLoading(true);
-        
-        const amount = parseFloat(cashManInput);
-        if (isNaN(amount) || amount <= 0.01) {
-            window.showToast('Bitte einen gültigen Betrag eingeben.', 'error');
-            window.showLoading(false);
+        const amountCents = parseInt(cashReceivedInput);
+        const amount = amountCents / 100;
+
+        if (amount <= 0 || isNaN(amount)) {
+            window.showToast('Bitte geben Sie einen gültigen Betrag ein.', 'error');
             return;
         }
-
+        
         if (type === 'ENTNAHME' && amount > cashBoxBalance) {
-            window.showToast('Entnahmebetrag ist höher als der Kassenstand.', 'error');
-            window.showLoading(false);
-            return;
+             window.showToast(`Entnahme von ${amount.toFixed(2).replace('.', ',')} € nicht möglich. Kassenstand: ${cashBoxBalance.toFixed(2).replace('.', ',')} €`, 'error');
+             return;
         }
 
+        window.showLoading(true);
         try {
-            const newBalance = type === 'EINLAGE' 
-                ? cashBoxBalance + amount
-                : cashBoxBalance - amount;
+            const newBalance = type === 'EINLAGE' ? cashBoxBalance + amount : cashBoxBalance - amount;
             
-            // 1. Speichere Transaktion
-            await addDoc(cashTransactionsCollectionRef(currentUser.uid), {
+            // 1. Kassenstand in Firestore aktualisieren
+            const sRef = settingsDocRef(currentUser.uid);
+            await updateDoc(sRef, { cashBoxBalance: newBalance });
+            cashBoxBalance = newBalance;
+
+            // 2. Kassen-Transaktion speichern
+            const cashTransRef = cashTransactionsCollectionRef(currentUser.uid);
+            await addDoc(cashTransRef, {
                 type: type,
                 amount: amount,
                 newBalance: newBalance,
-                oldBalance: cashBoxBalance,
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp(),
             });
             
-            // 2. Aktualisiere Kassenstand in Settings
-            const sRef = settingsDocRef(currentUser.uid);
-            await updateDoc(sRef, { cashBoxBalance: newBalance });
-            
-            // 3. Globale Variable aktualisieren und UI updaten
-            cashBoxBalance = newBalance;
+            // 3. UI aktualisieren und Modal schließen
+            window.showToast(`${type === 'EINLAGE' ? 'Einlage' : 'Entnahme'} von ${amount.toFixed(2).replace('.', ',')} € erfolgreich.`, 'success');
             document.getElementById('cash-balance-display').innerText = cashBoxBalance.toFixed(2).replace('.', ',') + ' €';
-            
-            window.showToast(`${type} von ${amount.toFixed(2).replace('.', ',')} € erfolgreich. Neuer Stand: ${cashBoxBalance.toFixed(2).replace('.', ',')} €`, 'success');
+            closeModal('cash-management-modal');
 
-            // Reset input
-            cashManInput = '0.00';
-            window.updateCashManDisplay();
-            
-        } catch(e) {
-            console.error("Cash management error:", e);
-            window.showToast('Fehler bei der Kassenverwaltung.', 'error');
+        } catch (err) {
+            console.error(err);
+            window.showToast(`Fehler bei der ${type} der Kasse.`, 'error');
         } finally {
             window.showLoading(false);
         }
     }
 
+    // ---------- Reporting / Storno ----------
+    window.loadTransactionHistory = async function(){
+        if (!currentUser) return;
+        
+        const today = new Date().toISOString().split('T')[0];
+        const reportDate = document.getElementById('report-date').value || today;
 
-    // ---------- Modal Controls (Helpers) (unchanged) ----------
+        window.showLoading(true);
+        try{
+            // Lade Transaktionen für den gewählten Tag
+            const q = query(transactionsCollectionRef(currentUser.uid), where("date", "==", reportDate), where("status", "in", ["completed", "cancelled"]));
+            const querySnapshot = await getDocs(q);
+            transactionHistory = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => b.timestamp - a.timestamp);
 
-    window.openLoginModal = function(){ document.getElementById('login-modal').style.display='flex'; window.toggleReceiptColumn(false); };
-    window.openRegistrationModal = function(){ window.closeModal('login-modal'); window.toggleReceiptColumn(false); document.getElementById('registration-modal').style.display='flex'; };
-    window.openForgotPasswordModal = function(){ window.closeModal('login-modal'); window.toggleReceiptColumn(false); document.getElementById('forgot-password-modal').style.display='flex'; };
-    window.openProductModal = function(){ window.renderProductModalContent(); window.toggleReceiptColumn(false); document.getElementById('product-modal').style.display='flex'; };
-
-    window.openReportModal = function(){
-        document.getElementById('report-modal').style.display='flex';
-        window.toggleReceiptColumn(false);
-        // Zusätzlich die Transaktionshistorie für das aktuelle Datum laden
-        window.loadTransactionHistory();
+            window.renderTransactionHistory();
+        } catch(err){
+            console.error("Error loading transactions:", err);
+            window.showToast('Fehler beim Laden der Transaktionen.', 'error');
+        } finally {
+            window.showLoading(false);
+        }
     }
+
+    window.renderTransactionHistory = function(){
+        const list = document.getElementById('transaction-list');
+        list.innerHTML = '';
+
+        if(transactionHistory.length === 0){
+             list.innerHTML = '<p class="text-gray-500 text-center p-4">Keine Transaktionen für diesen Tag.</p>';
+             return;
+        }
+
+        transactionHistory.forEach(t => {
+            const isCancelled = t.status === 'cancelled';
+            const total = t.totalBrutto.toFixed(2).replace('.', ',');
+            const time = t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+            
+            list.innerHTML += `
+                <div class="flex justify-between items-center p-2 border-b last:border-b-0 ${isCancelled ? 'bg-red-100 text-red-700 opacity-70' : 'bg-white'}">
+                    <span class="text-xs font-mono w-1/4">${time}</span>
+                    <span class="font-bold flex-grow text-right pr-2 ${isCancelled ? 'line-through' : ''}">${total} €</span>
+                    <span class="text-xs w-1/4 text-center">${t.paymentMethod}</span>
+                    
+                    ${!isCancelled ? 
+                        `<button onclick="window.confirmCancelTransaction('${t.id}')" class="text-sm font-bold text-red-500 hover:text-red-700 ml-2">STORNO</button>` 
+                        : 
+                        `<span class="text-sm font-bold text-red-700 ml-2">STORNIERT</span>`
+                    }
+                </div>
+            `;
+        });
+    }
+
+    window.confirmCancelTransaction = function(transactionId){
+        window.openPinModal('Transaktion stornieren', async () => {
+            await window.cancelTransaction(transactionId);
+        });
+    }
+
+    window.cancelTransaction = async function(transactionId){
+        if(!currentUser) return;
+        window.showLoading(true);
+        try{
+            const tRef = doc(transactionsCollectionRef(currentUser.uid), transactionId);
+            const tSnap = await getDoc(tRef);
+
+            if (!tSnap.exists() || tSnap.data().status === 'cancelled') {
+                window.showToast('Transaktion bereits storniert oder nicht gefunden.', 'error');
+                return;
+            }
+            const transaction = tSnap.data();
+
+            // 1. Status auf "cancelled" setzen
+            await updateDoc(tRef, { status: 'cancelled', cancellationTimestamp: serverTimestamp() });
+
+            // 2. Kassenstand korrigieren (nur bei BAR)
+            if(transaction.paymentMethod === 'BAR'){
+                cashBoxBalance -= transaction.totalBrutto; // Betrag abziehen
+                const sRef = settingsDocRef(currentUser.uid);
+                await updateDoc(sRef, { cashBoxBalance: cashBoxBalance });
+
+                // Cash Transaction loggen
+                 const cashTransRef = cashTransactionsCollectionRef(currentUser.uid);
+                 await addDoc(cashTransRef, {
+                     type: 'STORNO-AUSZAHLUNG',
+                     amount: -transaction.totalBrutto, // Betrag als Negativwert loggen
+                     newBalance: cashBoxBalance,
+                     timestamp: serverTimestamp(),
+                     relatedTransactionId: transactionId
+                 });
+            }
+
+            // 3. Bestand im Produkt korrigieren
+            const updateProductPromises = transaction.items.map(item => {
+                 const product = products[item.id];
+                 if(product) {
+                    // Update local state and Firestore stock
+                    product.stock += item.quantity; 
+                    const pRef = doc(productsCollectionRef(currentUser.uid), item.id);
+                    return updateDoc(pRef, { stock: product.stock });
+                 }
+                 return Promise.resolve();
+            });
+            await Promise.all(updateProductPromises);
+
+
+            window.showToast('Transaktion erfolgreich storniert.', 'success');
+            window.printReceipt(transaction.items, transaction.totalBrutto, 'storno', userSettings);
+            await window.loadTransactionHistory();
+            window.renderProductGrid();
+            document.getElementById('cash-balance-display').innerText = cashBoxBalance.toFixed(2).replace('.', ',') + ' €';
+
+        } catch(err){
+            console.error(err);
+            window.showToast('Fehler beim Stornieren der Transaktion.', 'error');
+        } finally {
+            window.showLoading(false);
+        }
+    }
+
+    window.cancelLastTransaction = async function(){
+         if(!currentUser) return;
+         window.showLoading(true);
+         try{
+             // Finde die letzte NICHT stornierte Transaktion
+             const q = query(transactionsCollectionRef(currentUser.uid), where("status", "==", "completed"), orderBy("timestamp", "desc"), limit(1));
+             const querySnapshot = await getDocs(q);
+
+             if (querySnapshot.empty) {
+                 window.showToast('Keine letzte Transaktion zum Stornieren gefunden.', 'info');
+                 return;
+             }
+             const lastTransactionId = querySnapshot.docs[0].id;
+
+             window.openPinModal('Letzte Rechnung stornieren', async () => {
+                 await window.cancelTransaction(lastTransactionId);
+             });
+
+         } catch(err){
+             console.error(err);
+             window.showToast('Fehler beim Suchen der letzten Transaktion.', 'error');
+         } finally {
+             window.showLoading(false);
+         }
+    }
+    
+    // Hilfsfunktion zur Berechnung der Steuersumme
+    function calculateTaxSummary(items){
+        let totalNetto = 0;
+        let totalTax = 0;
+        const taxSummary = {}; // { '19.0': { gross: X, net: Y, tax: Z } }
+
+        items.forEach(item => {
+            const taxRate = item.taxRate;
+            const brutto = item.totalBrutto;
+            
+            // MwSt-Satz als String-Schlüssel
+            const rateKey = taxRate.toFixed(1); 
+            
+            // Berechnung Netto & Steuer
+            const taxFactor = 1 + (taxRate / 100);
+            const netto = brutto / taxFactor;
+            const taxAmount = brutto - netto;
+
+            totalNetto += netto;
+            totalTax += taxAmount;
+
+            if (!taxSummary[rateKey]) {
+                taxSummary[rateKey] = { gross: 0, net: 0, tax: 0 };
+            }
+            taxSummary[rateKey].gross += brutto;
+            taxSummary[rateKey].net += netto;
+            taxSummary[rateKey].tax += taxAmount;
+        });
+        
+        return { totalNetto, totalTax, taxSummary };
+    }
+
+
+    // MODIFIZIERT: Neue Felder für Bewirtungsbeleg hinzugefügt
+    window.buildReceiptHtml = function(items, totalBrutto, receiptType = 'standard', settings = userSettings){
+        
+        const companyName = settings.companyName || 'Kassensystem';
+        const address = settings.address || '';
+        const taxId = settings.taxId || '';
+        
+        // Header
+        let content = `<div class="receipt-print">
+            <div class="text-center font-bold text-lg mb-1">${(companyName).toUpperCase()}</div>`;
+        if(address) content += `<div class="text-center text-xs">${address}</div>`;
+        if(taxId) content += `<div class="text-center text-xs">Steuer-Nr.: ${taxId}</div>`;
+        
+        // Bewirtungsbeleg Header: Führt nur den Titel, wenn es ein Bewirtungsbeleg ist
+        if (receiptType === 'bewirtung') {
+            content += `<div class="separator"></div>
+                <div class="text-center font-bold text-base mt-2">-- Bewirtungsbeleg --</div>
+                <div class="separator"></div>`;
+        }
+
+        content += `<div class="line text-xs mt-2"><span>Datum/Zeit:</span><span>${new Date().toLocaleString('de-DE')}</span></div>
+            <div class="line text-xs"><span>Transaktions-ID:</span><span>#${Math.random().toString(36).substring(2, 10).toUpperCase()}</span></div>
+            <div class="separator"></div>`;
+        
+        // Items
+        items.forEach((item) => {
+            content += `<div class="line">
+                <span class="item-name">${item.quantity}x ${item.name}</span>
+                <span class="item-price">${item.totalBrutto.toFixed(2).replace('.', ',')} €</span>
+            </div>`;
+            content += `<div class="line text-xs font-normal text-right"> 
+                <span></span> 
+                <span class="font-normal text-right">(${item.price.toFixed(2).replace('.', ',')} € / Stk. - ${item.taxRate.toFixed(0)}%)</span>
+            </div>`;
+        });
+        
+        // Footer (Totals and Tax Summary)
+        content += `<div class="separator"></div>
+            <div class="line total-line"><span>GESAMT BRUTTO:</span><span>${totalBrutto.toFixed(2).replace('.', ',')} €</span></div>`;
+        
+        // Storno Check (If used for cancellation receipt)
+        if(receiptType==='storno'){
+             content += `<div class="line total-line text-red-700"><span>STORNO BETRAG:</span><span>-${totalBrutto.toFixed(2).replace('.', ',')} €</span></div>`;
+        }
+        content += `<div class="separator"></div>`;
+        
+        // Detaillierte Steuer-Aufschlüsselung
+        const summary = calculateTaxSummary(items);
+        content += `<div class="line text-sm mt-1"><span>Netto Gesamt:</span><span class="font-semibold">${summary.totalNetto.toFixed(2).replace('.', ',')} €</span></div>`;
+        content += `<div class="line text-sm"><span>MwSt. Total:</span><span class="font-semibold">${summary.totalTax.toFixed(2).replace('.', ',')} €</span></div>`;
+        content += `<div class="line text-xs font-bold mt-2"><span>Davon:</span><span></span></div>`;
+
+        Object.keys(summary.taxSummary).sort().forEach(rate => {
+             const taxSum = summary.taxSummary[rate];
+             if (taxSum.gross > 0.005) {
+                content += `<div class="line text-xs"><span>${rate}% MwSt. (${taxSum.net.toFixed(2).replace('.', ',')} Netto):</span><span class="font-semibold">${taxSum.tax.toFixed(2).replace('.', ',')} €</span></div>`;
+             }
+        });
+        
+        // NEUE BEWIRTUNGSBELEG-FELDER
+        if (receiptType === 'bewirtung') {
+            content += `<div class="separator"></div>
+                <div class="text-center font-bold text-base mt-2">-- Zusätzliche Angaben zum Bewirtungsbeleg --</div>
+                <div class="separator"></div>`;
+            
+            // Anlass
+            content += `<div class="line text-sm mt-1"><span>Anlass der Bewirtung:</span></div>
+                <div class="fill-line"></div>`;
+                
+            // Personen
+            content += `<div class="line text-sm mt-1"><span>Anzahl der bewirteten Personen:</span></div>
+                <div class="fill-line"></div>`;
+                
+            // Datum und Ort
+            content += `<div class="line text-sm mt-1"><span>Ort, Datum:</span></div>
+                <div class="fill-line"></div>`;
+                
+            // Unterschrift
+            content += `<div class="line text-sm mt-1"><span>Unterschrift des Gastgebers:</span></div>
+                <div class="fill-line"></div>`;
+                
+            // Hinweis für Bewirteten
+            content += `<div class="line text-sm mt-2 font-bold text-center">Name und Anschrift des Bewirteten (Optional):</div>
+                <div class="fill-line" style="height: 3em;"></div>`; // Größeres Feld
+        }
+
+        // Footer (Bottom message)
+        content += `<div class="text-center text-xs mt-4">Vielen Dank für Ihren Besuch!</div>
+            <div class="text-center text-xs mb-2">Technischer Hinweis: TSE-Nr. [Platzhalter]</div>
+            <div class="separator"></div>
+            <div class="line text-xs"><span>Beleg-Typ:</span><span>${receiptType.toUpperCase()}</span></div>
+        </div>`;
+
+        return content;
+    }
+
+    window.printReceipt = function(items, totalBrutto, receiptType, settings){
+        const html = window.buildReceiptHtml(items, totalBrutto, receiptType, settings);
+        const printContainer = document.getElementById('print-receipt-container');
+        printContainer.innerHTML = html;
+        window.print();
+        // Clear after printing to hide the print container
+        setTimeout(() => printContainer.innerHTML = '', 100); 
+    }
+
+    window.runDailyReport = async function(outputType){
+        if (!currentUser) return;
+        const reportDate = document.getElementById('report-date').value;
+        if (!reportDate) {
+            window.showToast('Bitte wählen Sie ein Berichtsdatum.', 'error');
+            return;
+        }
+
+        window.showLoading(true);
+        try{
+            // Lade alle Transaktionen (abgeschlossen und storniert) für den Tag
+            const q = query(transactionsCollectionRef(currentUser.uid), where("date", "==", reportDate));
+            const querySnapshot = await getDocs(q);
+            const transactions = querySnapshot.docs.map(doc => doc.data());
+
+            // Lade alle Kassen-Transaktionen (Einlage/Entnahme) für den Tag
+            const cashTransQ = query(cashTransactionsCollectionRef(currentUser.uid), where("timestamp", ">=", new Date(reportDate)), where("timestamp", "<", new Date(new Date(reportDate).setDate(new Date(reportDate).getDate() + 1))));
+            const cashTransSnap = await getDocs(cashTransQ);
+            const cashTransactions = cashTransSnap.docs.map(doc => doc.data());
+
+            // Berechnungen
+            let totalSales = 0;
+            let totalCancellations = 0;
+            let totalCashSales = 0;
+            let totalCardSales = 0;
+            let taxTotals = {};
+            let totalInlays = 0;
+            let totalRemovals = 0;
+
+            transactions.forEach(t => {
+                const isCancelled = t.status === 'cancelled';
+                const amount = t.totalBrutto;
+                
+                if (isCancelled) {
+                    totalCancellations += amount;
+                } else {
+                    totalSales += amount;
+                    if (t.paymentMethod === 'BAR') totalCashSales += amount;
+                    if (t.paymentMethod === 'KARTE') totalCardSales += amount;
+                    
+                    // Detail Tax Calculation
+                    const summary = calculateTaxSummary(t.items);
+                    Object.keys(summary.taxSummary).forEach(rate => {
+                        if (!taxTotals[rate]) taxTotals[rate] = { net: 0, tax: 0 };
+                        taxTotals[rate].net += summary.taxSummary[rate].net;
+                        taxTotals[rate].tax += summary.taxSummary[rate].tax;
+                    });
+                }
+            });
+            
+            cashTransactions.forEach(ct => {
+                if(ct.type === 'EINLAGE') totalInlays += ct.amount;
+                if(ct.type === 'ENTNAHME' || ct.type === 'STORNO-AUSZAHLUNG') totalRemovals += ct.amount;
+            });
+            
+            const netSales = Object.values(taxTotals).reduce((sum, t) => sum + t.net, 0);
+            const grossSales = totalSales;
+            const totalCashMovement = (totalCashSales + totalInlays) - totalRemovals;
+
+            // Report HTML generieren
+            const companyName = userSettings.companyName || 'Kassensystem';
+            const address = userSettings.address || '';
+            const taxId = userSettings.taxId || '';
+
+            let reportHtml = `<div class="receipt-print p-4">
+                <div class="text-center font-bold text-xl mb-1">${(companyName).toUpperCase()}</div>`;
+                if(address) reportHtml += `<div class="text-center text-sm">${address}</div>`;
+                if(taxId) reportHtml += `<div class="text-center text-sm">Steuer-Nr.: ${taxId}</div>`;
+
+                reportHtml += `<div class="separator"></div>
+                <div class="text-center font-bold text-lg mt-2">-- Tagesabschluss-Bericht --</div>
+                <div class="text-center font-bold text-lg mb-2">vom ${reportDate.split('-').reverse().join('.')}</div>
+                <div class="separator"></div>`;
+
+                reportHtml += `<div class="line total-line mt-4"><span>BRUTTO-UMSATZ:</span><span>${grossSales.toFixed(2).replace('.', ',')} €</span></div>
+                <div class="line text-red-700 total-line"><span>STORNO-SUMME:</span><span>-${totalCancellations.toFixed(2).replace('.', ',')} €</span></div>
+                <div class="separator"></div>`;
+
+                reportHtml += `<div class="line total-line mt-2"><span>EINGENOMMEN BAR:</span><span>${totalCashSales.toFixed(2).replace('.', ',')} €</span></div>
+                <div class="line total-line"><span>EINGENOMMEN KARTE:</span><span>${totalCardSales.toFixed(2).replace('.', ',')} €</span></div>
+                <div class="separator"></div>`;
+
+                reportHtml += `<div class="line text-sm mt-2 font-bold"><span>KASSENBEWEGUNGEN:</span><span></span></div>
+                <div class="line text-sm"><span>+ Einlagen:</span><span>${totalInlays.toFixed(2).replace('.', ',')} €</span></div>
+                <div class="line text-sm"><span>- Entnahmen/Storno-Ausz.:</span><span>${totalRemovals.toFixed(2).replace('.', ',')} €</span></div>
+                <div class="separator"></div>`;
+                
+                reportHtml += `<div class="line total-line"><span>KASSENBESTAND (SOLL):</span><span>${cashBoxBalance.toFixed(2).replace('.', ',')} €</span></div>`;
+                reportHtml += `<div class="separator"></div>`;
+
+                reportHtml += `<div class="line text-sm mt-2 font-bold"><span>STEUER-AUFSCHLÜSSELUNG:</span><span></span></div>
+                <div class="line text-sm"><span>Netto Umsatz Gesamt:</span><span class="font-semibold">${netSales.toFixed(2).replace('.', ',')} €</span></div>
+                
+                ${Object.keys(taxTotals).sort().map(rate => 
+                   `<div class="line text-xs"><span>${rate}% MwSt. (${taxTotals[rate].net.toFixed(2).replace('.', ',')} Netto):</span><span class="font-semibold">${taxTotals[rate].tax.toFixed(2).replace('.', ',')} €</span></div>`
+                ).join('')}
+
+                <div class="separator"></div>
+                <div class="text-center text-xs mt-4">Bericht erstellt: ${new Date().toLocaleString('de-DE')}</div>
+                <div class="text-center text-xs mb-2">Transaktionen: ${transactions.length} | Netto: ${netSales.toFixed(2).replace('.', ',')} €</div>
+            </div>`;
+
+            if(outputType === 'report'){
+                document.getElementById('screen-report-content').innerHTML = reportHtml;
+                window.printReceipt(reportHtml, 0, 'report', userSettings);
+            } else if (outputType === 'csv'){
+                // CSV Export Logic (simplified example)
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Typ,Betrag,Zahlart,Zeitpunkt,Status\n";
+                transactions.forEach(t => {
+                    const time = t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleString('de-DE') : 'N/A';
+                    csvContent += `Umsatz,${t.totalBrutto.toFixed(2).replace('.', ',')},${t.paymentMethod},"${time}",${t.status}\n`;
+                });
+                 cashTransactions.forEach(ct => {
+                    const time = ct.timestamp ? new Date(ct.timestamp.seconds * 1000).toLocaleString('de-DE') : 'N/A';
+                    csvContent += `${ct.type},${ct.amount.toFixed(2).replace('.', ',')},BAR,"${time}",N/A\n`;
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `Tagesabschluss_${reportDate}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.showToast('CSV-Export abgeschlossen.', 'success');
+            }
+
+        } catch(err){
+             console.error(err);
+             window.showToast('Fehler beim Erstellen des Tagesabschlusses.', 'error');
+        } finally {
+            window.showLoading(false);
+            window.loadTransactionHistory(); // Reload history for the current date
+        }
+    }
+
 
     // ---------- Startup (NEU: BINDET LOGIN HANDLER PER JS) ----------
     document.addEventListener('DOMContentLoaded', () => {
