@@ -473,6 +473,7 @@
     let reversalCode = null; 
     let pinModalTarget = ''; 
     let cashManInput = '0.00'; 
+    let currentPinInput = ''; // NEU: Globaler Speicher für die unmaskierte PIN
 
     // ---------- Utility functions ----------
     window.updateAppView = function(view){
@@ -647,8 +648,8 @@
         window.showLoading(true);
         try{
             await seedUserDataIfNeeded(currentUser.uid);
-            await loadSettings();
-            await loadProductsAndCategories();
+            await window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.updateAppView('kasse');
         } catch(err){
             console.error('Initialisierungsfehler:', err);
@@ -657,8 +658,8 @@
         } finally { window.showLoading(false); }
     }
 
-    // ---------- Settings (KORRIGIERT für PIN-Typ) ----------
-    async function loadSettings(){
+    // ---------- Settings (KORRIGIERT: Jetzt global) ----------
+    window.loadSettings = async function(){ // KORREKTUR: Funktion global verfügbar machen
         if(!currentUser) return;
         const sRef = settingsDocRef(currentUser.uid);
         const sSnap = await getDoc(sRef);
@@ -693,7 +694,7 @@
             await setDoc(sRef, userSettings);
             // Sicherstellen, dass die globale Variable sofort aktualisiert wird (Korrektur: String-Konvertierung hinzugefügt)
             reversalCode = userSettings.reversalCode ? String(userSettings.reversalCode) : null; 
-            loadSettings(); // update global variable
+            window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
             window.showToast('Einstellungen gespeichert.', 'success');
         } catch(err){
             console.error(err);
@@ -701,21 +702,19 @@
         } finally { window.showLoading(false); }
     }
 
-    // NEU: PIN Logic für Settings und Report (KORRIGIERT: Vergleichstyp)
+    // NEU: PIN Logic für Settings und Report (KORRIGIERT: Vergleichstyp und Eingabe-Akkumulation)
     window.updatePinInputDisplay = function(pin) {
         document.getElementById('pin-input-display').innerText = '*'.repeat(pin.length);
         document.getElementById('pin-enter-btn').disabled = pin.length !== 4;
     }
 
+    // KORRIGIERT: Behebt das Problem der nicht akkumulierten Eingabe
     window.handlePinInput = function(input) {
-        const display = document.getElementById('pin-input-display');
-        let currentPin = display.innerText.replace(/\*/g, '');
-        
         if (input === 'clear') {
-            currentPin = '';
+            currentPinInput = ''; // Reset
         } else if (input === 'enter') {
             // KORREKTUR: Beide als String vergleichen
-            if (currentPin.toString() === String(reversalCode)) { 
+            if (currentPinInput.toString() === String(reversalCode)) { 
                 closeModal('pin-modal');
                 if (pinModalTarget === 'settings') {
                     window.openSettingsModal(); 
@@ -723,19 +722,19 @@
                     window.openReportModal(); 
                 }
                 pinModalTarget = '';
-                window.updatePinInputDisplay('');
-                showToast('Code korrekt.', 'success');
+                window.showToast('Code korrekt.', 'success');
             } else {
                 showToast('Falscher Code.', 'error');
-                currentPin = ''; // Reset on failure
+                currentPinInput = ''; // Reset on failure
             }
-        } else if (currentPin.length < 4) {
-            currentPin += input;
+        } else if (currentPinInput.length < 4) {
+            currentPinInput += input;
         }
         
-        window.updatePinInputDisplay(currentPin);
+        window.updatePinInputDisplay(currentPinInput);
     }
 
+    // KORRIGIERT: Setzt currentPinInput beim Öffnen des Modals zurück
     window.openPinModal = function(target) {
         if (!reversalCode) {
             // Kein PIN gesetzt, Modal überspringen
@@ -748,7 +747,9 @@
         }
         
         pinModalTarget = target;
-        document.getElementById('pin-input-display').innerText = ''; // Clear display
+        currentPinInput = ''; // Wichtig: PIN-Eingabe zurücksetzen
+        window.updatePinInputDisplay(currentPinInput); // Display initialisieren (0 Sterne)
+
         document.getElementById('pin-modal-title').innerText = (target === 'settings' ? 'Einstellungen' : 'Tagesabschluss/Storno') + ' Code';
         document.getElementById('pin-modal').style.display = 'flex';
         document.getElementById('pin-enter-btn').disabled = true;
@@ -787,8 +788,8 @@
         document.getElementById('general-settings-form-container').style.display = 'block';
     }
 
-    // ---------- Products & Categories (MODIFIZIERT für Bestand) ----------
-    async function loadProductsAndCategories(){
+    // ---------- Products & Categories (MODIFIZIERT: Jetzt global) ----------
+    window.loadProductsAndCategories = async function(){ // KORREKTUR: Funktion global verfügbar machen
         // ... (existing logic) ...
         const cSnap = await getDocs(categoriesCollectionRef(currentUser.uid));
         categories = {};
@@ -819,7 +820,7 @@
         try{
             await addDoc(categoriesCollectionRef(currentUser.uid), { name: name, order: Date.now() });
             document.getElementById('new-category-name').value = '';
-            await loadProductsAndCategories();
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.showToast('Kategorie hinzugefügt.', 'success');
             window.renderProductModalContent();
         } catch(err){
@@ -840,7 +841,7 @@
             const deletePromises = pSnap.docs.map(d => deleteDoc(doc(productsCollectionRef(currentUser.uid), d.id)));
             await Promise.all(deletePromises);
             
-            await loadProductsAndCategories(); 
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen 
             window.showToast('Kategorie und Produkte gelöscht.', 'success');
             window.renderProductModalContent();
         } catch(err){
@@ -877,7 +878,7 @@
             document.getElementById('new-product-price').value = '';
             document.getElementById('new-product-stock').value = '1'; 
             
-            await loadProductsAndCategories(); 
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.showToast('Produkt hinzugefügt.', 'success');
             window.renderProductModalContent();
         } catch(err){
@@ -892,7 +893,7 @@
         window.showLoading(true);
         try{
             await deleteDoc(doc(productsCollectionRef(currentUser.uid), id));
-            await loadProductsAndCategories(); 
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.showToast('Produkt gelöscht.', 'success');
             window.renderProductModalContent();
         } catch(err){
@@ -922,7 +923,7 @@
                 stock: newStock, 
             });
 
-            await loadProductsAndCategories(); 
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.showToast('Produkt aktualisiert.', 'success');
         } catch(err){ 
             console.error(err); 
@@ -1453,7 +1454,7 @@
             window.renderReceipt(); // Render empty receipt
             window.closeModal('finalize-modal');
             
-            await window.loadProductsAndCategories(); // Produkte neu laden, um Bestand zu aktualisieren
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.showToast('Transaktion abgeschlossen.', 'success');
         } catch(err){
             console.error(err);
@@ -1523,7 +1524,7 @@
                 cancellationTimestamp: serverTimestamp() 
             });
 
-            await window.loadProductsAndCategories(); // Produkte neu laden
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.loadTransactionHistory(); // Transaktionshistorie neu laden
 
             window.showToast('Transaktion erfolgreich storniert.', 'success');
@@ -1642,7 +1643,7 @@
                 cancellationTimestamp: serverTimestamp() 
             });
 
-            await window.loadProductsAndCategories(); 
+            await window.loadProductsAndCategories(); // KORREKTUR: Jetzt global aufrufen
             window.loadTransactionHistory(); 
             window.showToast('Transaktion erfolgreich storniert.', 'success');
 
@@ -1787,7 +1788,7 @@
         reportHtml += line(`Geld Entnahme (-):`, `-${totalEntnahme.toFixed(2).replace('.', ',')} €`);
         
         // Final Cash Balance (From Settings)
-        await loadSettings(); 
+        await window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
         reportHtml += lineBreak;
         reportHtml += `<div class="line total-line border-t-2 border-indigo-700 pt-2"><span>Aktueller Kassenstand (System):</span><span>${cashBoxBalance.toFixed(2).replace('.', ',')} €</span></div>`;
 
@@ -1898,7 +1899,7 @@
         if (!currentUser) return;
         window.showLoading(true);
         try {
-            await loadSettings(); 
+            await window.loadSettings(); // KORREKTUR: Jetzt global aufrufen
             document.getElementById('cash-balance-display').innerText = cashBoxBalance.toFixed(2).replace('.', ',') + ' €';
             
             cashManInput = '0.00'; // Reset input
