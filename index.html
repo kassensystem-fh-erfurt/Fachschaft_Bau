@@ -424,7 +424,7 @@
       <button onclick="window.runDailyReport('csv')" class="product-btn w-full p-3 rounded-xl font-bold text-base text-gray-800 bg-gray-300">Tagesabschluss & Storno (CSV Export)</button>
       
       <div id="screen-report-content" class="mt-4 p-4 bg-gray-100 rounded-lg overflow-y-auto flex-grow receipt-print">
-        <p class="text-gray-500 text-center">Wählen Sie ein Datum und klicken Sie auf 'Tagesabschluss (Bericht)'.</p>
+        <p class="text-gray-500 text-center">Wählen Sie ein Datum und klicken Sie auf 'Tagesabschluss & Storno (Bericht)'.</p>
       </div>
 
       <h3 class="text-xl font-bold text-gray-700 mt-6 
@@ -1660,10 +1660,11 @@
         endOfDay.setHours(23, 59, 59, 999);
 
         // 1. Transaktionen (inkl. Storno-Funktion)
+        // Lädt alle Transaktionen für den Tag (inkl. stornierter), damit sie in der Liste angezeigt werden können
         const q = query(transactionsCollectionRef(currentUser.uid), 
             where('timestamp', '>=', startOfDay),
             where('timestamp', '<=', endOfDay),
-            orderBy('timestamp', 'desc'));
+            orderBy('timestamp', 'desc')); 
             
         const querySnapshot = await getDocs(q);
         transactionHistory = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1675,11 +1676,10 @@
     // KORREKTUR 2: FUNKTIONALITÄTS-FIX FÜR REPORT-BUTTONS
     window.runDailyReport = async function(type){
          if (!currentUser) return;
-         window.showLoading(true); // Lade-Screen anzeigen
+         window.showLoading(true); 
         
-        // ZUERST: Sicherstellen, dass die Daten für den Bericht geladen sind
+        // ZUERST: Sicherstellen, dass die Daten für den Bericht geladen sind.
         await window.loadTransactionHistory();
-        // Die loadTransactionHistory() setzt bereits den Loading-Screen, daher ist der Aufruf oben redundant, aber wir lassen ihn für Konsistenz
 
         const date = document.getElementById('report-date').value;
         const startOfDay = new Date(date);
@@ -1688,15 +1688,18 @@
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
         
-        // 1. Transaktionen für den Bericht laden
-        // Nutzen der globalen transactionHistory wäre hier möglich, aber direkter DB-Abruf ist sicherer
+        // 1. Transaktionen für den Bericht laden: KEIN Status-Filter in der Firestore-Abfrage!
         const q = query(transactionsCollectionRef(currentUser.uid), 
             where('timestamp', '>=', startOfDay),
             where('timestamp', '<=', endOfDay),
-            where('status', '!=', 'cancelled')); // Nur erfolgreiche Transaktionen
+            orderBy('timestamp', 'desc'));
             
         const tSnap = await getDocs(q);
-        const dailyTransactions = tSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // **FIX: Client-seitiges Filtern der stornierten Transaktionen**
+        const dailyTransactions = tSnap.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(t => t.status !== 'cancelled'); // Nur erfolgreiche Transaktionen für den Bericht
         
         // 2. Kassenbewegungen (Einlage/Entnahme)
         const cq = query(cashTransactionsCollectionRef(currentUser.uid),
