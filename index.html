@@ -1224,25 +1224,35 @@
     // --- ENDE NEUE FUNKTIONEN ---
 
 
-    // *** KORRIGIERTE FUNKTION FÜR MENGEN-EINGABE ***
+    // *** KORRIGIERTE FUNKTION FÜR MENGEN-EINGABE (FIX FÜR 11-19) ***
     window.handleQuantityInput = function(key){
         if(key === 'clear'){
             currentQuantity = 1;
         } else if (key.match(/^\d$/)){
+            const currentStr = String(currentQuantity);
             let newQuantity;
             
-            if (currentQuantity === 1 && key !== '0') {
-                // Wenn es der Standardwert '1' ist und eine Ziffer (1-9) gedrückt wird, 
-                // wird die '1' ersetzt, um einzelne Ziffern korrekt zu verarbeiten.
+            // NEUE LOGIK:
+            if (currentQuantity > 9) {
+                // 1. Wenn die Menge bereits zweistellig (oder mehr) ist, immer anhängen.
+                const appendedStr = currentStr + key;
+                newQuantity = parseInt(appendedStr);
+            } else if (currentQuantity === 1 && key === '0') {
+                // 2. Von 1 auf 10 -> Anhängen.
+                newQuantity = 10;
+            } else if (currentQuantity === 1 && key === '1') {
+                // 3. FIX: Von 1 auf 11. Hier muss angehängt werden, um 11 zu erhalten.
+                const appendedStr = currentStr + key; // '1' + '1' = '11'
+                newQuantity = parseInt(appendedStr);
+            } else if (currentQuantity === 1 && key !== '0') {
+                // 4. Von 1 auf 2-9 -> Ersetzen (da es der Start einer neuen Einzelziffer ist)
                 newQuantity = parseInt(key);
             } else {
-                // Ansonsten (z.B. Eingabe von '0', oder wenn bereits eine mehrstellige Zahl begonnen wurde), 
-                // wird die Ziffer angehängt.
-                const currentStr = String(currentQuantity);
+                // 5. Alle anderen Fälle (z.B. 0 -> x, oder bereits mehrstellig, falls 1. Fall nicht greift)
                 const appendedStr = currentStr + key;
                 newQuantity = parseInt(appendedStr);
             }
-
+            
             if (newQuantity <= 99) {
                 currentQuantity = newQuantity;
             } else {
