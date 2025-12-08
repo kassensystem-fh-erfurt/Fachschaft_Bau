@@ -451,6 +451,9 @@
     <div class="md:col-span-2 flex flex-col space-y-4">
       
       <div class="flex space-x-2 p-2 bg-white rounded-xl shadow-lg">
+        <button onclick="window.openSettingsModalWithPin()" class="product-btn p-2 bg-gray-600 text-white rounded-lg whitespace-nowrap">Einstellungen</button>
+        <button onclick="window.openReportModalWithPin()" class="product-btn p-2 bg-blue-600 text-white rounded-lg whitespace-nowrap">Tagesabschluss</button>
+
         <div class="flex-grow">
           <div id="category-tabs" class="flex space-x-1 overflow-x-auto pb-1">
  
@@ -458,8 +461,6 @@
         </div>
         <button onclick="window.handleLogout()" class="product-btn p-2 bg-red-500 text-white rounded-lg whitespace-nowrap">Logout</button>
       </div>
-
- 
       <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 flex-grow min-h-[300px]">
         <p class="text-gray-500 col-span-full text-center p-4">Produkte werden geladen...</p>
       </div>
