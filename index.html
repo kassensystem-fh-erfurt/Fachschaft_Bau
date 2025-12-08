@@ -469,10 +469,10 @@
     let cashReceivedInput = '0';
     let cashPaymentMethod = 'BAR'; 
     let transactionHistory = []; 
-    let cashBoxBalance = 0.00; // NEU: Kassenstand
-    let reversalCode = null; // NEU: PIN Code für Storno/Einstellungen
-    let pinModalTarget = ''; // NEU: Speichert, welche Funktion nach PIN-Eingabe aufgerufen werden soll
-    let cashManInput = '0.00'; // NEU: Input für Kassenverwaltung
+    let cashBoxBalance = 0.00; 
+    let reversalCode = null; 
+    let pinModalTarget = ''; 
+    let cashManInput = '0.00'; 
 
     // ---------- Utility functions ----------
     window.updateAppView = function(view){
@@ -598,7 +598,7 @@
             // Clear local data
             categories = {}; products = {}; currentBestellung = []; totalBrutto = 0.00; userSettings = {};
             currentQuantity = 1; cashReceivedInput = '0'; cashPaymentMethod = 'BAR'; transactionHistory = [];
-            cashBoxBalance = 0.00; reversalCode = null; // NEU: Kassenstand/Code zurücksetzen
+            cashBoxBalance = 0.00; reversalCode = null; 
         }
     });
 
@@ -607,7 +607,7 @@
     function categoriesCollectionRef(uid){ return collection(db, 'users', uid, 'categories'); }
     function productsCollectionRef(uid){ return collection(db, 'users', uid, 'products'); }
     function transactionsCollectionRef(uid){ return collection(db, 'users', uid, 'transactions'); }
-    function cashTransactionsCollectionRef(uid){ return collection(db, 'users', uid, 'cash-transactions'); } // NEU
+    function cashTransactionsCollectionRef(uid){ return collection(db, 'users', uid, 'cash-transactions'); } 
 
     // ---------- Seed / Init (GEÄNDERT für neue Default-Werte) ----------
     async function seedUserDataIfNeeded(uid){
@@ -635,7 +635,7 @@
         // Standard-Produkte (mit Bestand)
         const prodRef = productsCollectionRef(uid);
         const standardProds = [
-            { name: 'Kaffee', price: '2.50', categoryId: 'cat1', taxRate: 19.0, stock: 50 }, // NEU: Bestand
+            { name: 'Kaffee', price: '2.50', categoryId: 'cat1', taxRate: 19.0, stock: 50 }, 
             { name: 'Cola', price: '3.00', categoryId: 'cat1', taxRate: 19.0, stock: 100 },
             { name: 'Kuchen', price: '4.50', categoryId: 'cat2', taxRate: 7.0, stock: 30 },
             { name: 'Sandwich', price: '5.50', categoryId: 'cat2', taxRate: 19.0, stock: 25 },
@@ -657,15 +657,16 @@
         } finally { window.showLoading(false); }
     }
 
-    // ---------- Settings (MODIFIZIERT für Code & Kassenstand) ----------
+    // ---------- Settings (KORRIGIERT für PIN-Typ) ----------
     async function loadSettings(){
         if(!currentUser) return;
         const sRef = settingsDocRef(currentUser.uid);
         const sSnap = await getDoc(sRef);
         if(sSnap.exists()){ 
             userSettings = sSnap.data();
-            reversalCode = userSettings.reversalCode || null; // NEU: PIN laden
-            cashBoxBalance = parseFloat(userSettings.cashBoxBalance || 0.00); // NEU: Kassenstand laden
+            // KORREKTUR: Sicherstellen, dass reversalCode als String behandelt wird, falls er existiert.
+            reversalCode = userSettings.reversalCode ? String(userSettings.reversalCode) : null; 
+            cashBoxBalance = parseFloat(userSettings.cashBoxBalance || 0.00); 
         } else { 
             // Default Werte (Wichtig für neue Nutzer)
             userSettings = { companyName:'Kassensystem', address:'', taxId:'', taxRate:19.0, reversalCode: null, cashBoxBalance: 0.00 }; 
@@ -685,12 +686,13 @@
                 address: document.getElementById('address').value || '',
                 taxId: document.getElementById('tax-id').value || '',
                 taxRate: parseFloat(document.getElementById('tax-rate').value) || 19.0,
-                reversalCode: (codeInput.length === 4 && /^\d+$/.test(codeInput)) ? codeInput : null, // NEU: Code validieren
-                cashBoxBalance: cashBoxBalance, // Kassenstand beibehalten
+                reversalCode: (codeInput.length === 4 && /^\d+$/.test(codeInput)) ? codeInput : null, 
+                cashBoxBalance: cashBoxBalance, 
             };
             
             await setDoc(sRef, userSettings);
-            reversalCode = userSettings.reversalCode; // Global aktualisieren
+            // Sicherstellen, dass die globale Variable sofort aktualisiert wird (Korrektur: String-Konvertierung hinzugefügt)
+            reversalCode = userSettings.reversalCode ? String(userSettings.reversalCode) : null; 
             loadSettings(); // update global variable
             window.showToast('Einstellungen gespeichert.', 'success');
         } catch(err){
@@ -699,7 +701,7 @@
         } finally { window.showLoading(false); }
     }
 
-    // NEU: PIN Logic für Settings und Report
+    // NEU: PIN Logic für Settings und Report (KORRIGIERT: Vergleichstyp)
     window.updatePinInputDisplay = function(pin) {
         document.getElementById('pin-input-display').innerText = '*'.repeat(pin.length);
         document.getElementById('pin-enter-btn').disabled = pin.length !== 4;
@@ -712,12 +714,13 @@
         if (input === 'clear') {
             currentPin = '';
         } else if (input === 'enter') {
-            if (currentPin === reversalCode) {
+            // KORREKTUR: Beide als String vergleichen
+            if (currentPin.toString() === String(reversalCode)) { 
                 closeModal('pin-modal');
                 if (pinModalTarget === 'settings') {
-                    window.openSettingsModal(); // Öffne das echte Modal
+                    window.openSettingsModal(); 
                 } else if (pinModalTarget === 'report') {
-                    window.openReportModal(); // Öffne das echte Modal
+                    window.openReportModal(); 
                 }
                 pinModalTarget = '';
                 window.updatePinInputDisplay('');
@@ -771,7 +774,7 @@
         document.getElementById('address').value = userSettings.address || '';
         document.getElementById('tax-id').value = userSettings.taxId || '';
         document.getElementById('tax-rate').value = userSettings.taxRate.toFixed(1);
-        document.getElementById('reversal-code').value = userSettings.reversalCode || ''; // NEU: Code anzeigen
+        document.getElementById('reversal-code').value = userSettings.reversalCode || ''; 
     }
 
     window.showSettingsMenu = function(){
@@ -851,11 +854,11 @@
         if(!currentUser) return;
         const name = document.getElementById('new-product-name').value.trim();
         const price = document.getElementById('new-product-price').value;
-        const stock = parseInt(document.getElementById('new-product-stock').value) || 0; // NEU: Bestand
+        const stock = parseInt(document.getElementById('new-product-stock').value) || 0; 
         const categoryId = document.getElementById('new-product-category').value;
         const taxRate = parseFloat(document.getElementById('new-product-tax-rate').value);
 
-        if(!name || isNaN(price) || parseFloat(price) <= 0 || !categoryId || isNaN(stock) || stock < 0){ // NEU: Bestand validieren
+        if(!name || isNaN(price) || parseFloat(price) <= 0 || !categoryId || isNaN(stock) || stock < 0){ 
             window.showToast('Ungültige Eingabe.', 'error');
             return;
         }
@@ -872,7 +875,7 @@
             
             document.getElementById('new-product-name').value = '';
             document.getElementById('new-product-price').value = '';
-            document.getElementById('new-product-stock').value = '1'; // NEU: Reset Bestand
+            document.getElementById('new-product-stock').value = '1'; 
             
             await loadProductsAndCategories(); 
             window.showToast('Produkt hinzugefügt.', 'success');
@@ -902,10 +905,10 @@
     window.saveProductPrice = async function(productId){
         if(!currentUser) return;
         const newPrice = parseFloat(document.getElementById(`price-input-${productId}`).value);
-        const newStock = parseInt(document.getElementById(`stock-input-${productId}`).value); // NEU: Bestand holen
+        const newStock = parseInt(document.getElementById(`stock-input-${productId}`).value); 
         const newTaxRate = parseFloat(document.getElementById(`tax-input-${productId}`).value);
 
-        if(isNaN(newPrice) || newPrice <= 0 || isNaN(newTaxRate) || isNaN(newStock) || newStock < 0){ // NEU: Bestand validieren
+        if(isNaN(newPrice) || newPrice <= 0 || isNaN(newTaxRate) || isNaN(newStock) || newStock < 0){ 
             window.showToast('Ungültige Eingabe für Preis, Bestand oder Steuersatz', 'error');
             return;
         }
@@ -916,7 +919,7 @@
             await updateDoc(prodRef, { 
                 price: newPrice.toFixed(2),
                 taxRate: newTaxRate,
-                stock: newStock, // NEU: Bestand speichern
+                stock: newStock, 
             });
 
             await loadProductsAndCategories(); 
@@ -1011,7 +1014,7 @@
         
         // Filtert nach Kategorie UND Produkten mit Bestand > 0
         const filtered = Object.values(products).filter(p => 
-            (!categoryId || p.categoryId === categoryId) && p.stock > 0 // NEU: Filter nach Bestand > 0
+            (!categoryId || p.categoryId === categoryId) && p.stock > 0 
         );
 
         if(filtered.length === 0){
@@ -1091,7 +1094,7 @@
                 quantity: currentQuantity,
                 totalBrutto: parseFloat((product.price * currentQuantity).toFixed(2)),
                 taxRate: itemTaxRate,
-                stock: product.stock // Bestand im Item speichern (für Storno/Update)
+                stock: product.stock 
             });
         }
 
@@ -1241,11 +1244,28 @@
         }
     }
 
-    // ... (Existing print functions) ...
+    // NEU HINZUGEFÜGT (FEHLTE IM VORHERIGEN CODE)
+    window.printReceipt = async function(receiptType, transactionId = null, transactionTimestamp = null){
+        const printContainer = document.getElementById('print-receipt-container');
+        window.renderReceipt(true, receiptType, transactionId, transactionTimestamp);
+        
+        printContainer.style.display = 'block'; 
+        printContainer.style.visibility = 'visible'; 
 
-    // MODIFIZIERT: printCancellationReceipt (für TaxRate)
+        // KORREKTUR: Erhöhter Delay für stabileren Druck (1500ms)
+        await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+        window.print();
+
+        setTimeout(() => {
+            printContainer.innerHTML = '';
+            printContainer.style.display = 'none';
+            printContainer.style.visibility = 'hidden';
+        }, 1500); // KORREKTUR: Gleicher Delay für Aufräumarbeiten
+    }
+
+    // MODIFIZIERT: printCancellationReceipt (Delay korrigiert)
     window.printCancellationReceipt = async function(transaction){
-        // ... (existing logic) ...
         const originalBestellung = currentBestellung;
         currentBestellung = transaction.items; // Temporär die Bon-Items setzen
 
@@ -1255,13 +1275,12 @@
         const cancellationTime = transaction.cancellationTimestamp || { seconds: Math.floor(Date.now() / 1000) }; 
         window.renderReceipt(true, 'storno', transaction.id, cancellationTime);
 
-        // ... (rest of print logic) ...
         // Force visibility and display temporarily to aid rendering
         printContainer.style.display = 'block'; 
         printContainer.style.visibility = 'visible'; 
 
-        // **FIX FÜR SAFARI: EXTREM VERZÖGERN FÜR GARANTIERTES RENDERING**
-        await new Promise(resolve => setTimeout(resolve, 800)); 
+        // KORREKTUR: Erhöhter Delay für stabileren Druck (1500ms)
+        await new Promise(resolve => setTimeout(resolve, 1500)); 
 
         // 3. Trigger print
         window.print();
@@ -1271,7 +1290,7 @@
             printContainer.innerHTML = ''; // Clean up print content
             printContainer.style.display = 'none';
             printContainer.style.visibility = 'hidden';
-        }, 800);
+        }, 1500); // KORREKTUR: Gleicher Delay für Aufräumarbeiten
 
         // 5. Restore original state
         currentBestellung = originalBestellung;
@@ -1380,7 +1399,7 @@
             const transaction = {
                 items: currentBestellung,
                 totalBrutto: totalBrutto,
-                taxSummary: summary.taxSummary, // NEU: Steuer-Summary speichern
+                taxSummary: summary.taxSummary, 
                 paymentMethod: method,
                 isCancelled: false,
                 timestamp: serverTimestamp()
@@ -1442,7 +1461,7 @@
         } finally { window.showLoading(false); }
     }
 
-    // ---------- Storno der letzten Transaktion (MODIFIZIERT für STOCK & CASH UPDATE) ----------
+    // ---------- Storno der letzten Transaktion (KORRIGIERT: STOCK RETURN LOGIC) ----------
     window.cancelLastTransaction = async function(){
         if(!currentUser) return;
 
@@ -1459,6 +1478,7 @@
             const querySnapshot = await getDocs(q);
             if(querySnapshot.empty){
                 window.showToast('Keine letzte, nicht stornierte Transaktion gefunden.', 'info');
+                window.showLoading(false);
                 return;
             }
 
@@ -1472,16 +1492,16 @@
                 return;
             }
 
-            // 1. STOCK RETURN (NEU)
-            const stockReturnUpdates = transaction.items.map(item => {
+            // KORREKTUR 1: STOCK RETURN - Aktuellen Bestand vor dem Update lesen
+            for (const item of transaction.items) {
                 const prodRef = doc(productsCollectionRef(currentUser.uid), item.id);
-                const product = products[item.id]; // Aktuellen Bestand holen
-                if (product && product.stock !== undefined) {
-                    return updateDoc(prodRef, { stock: product.stock + item.quantity });
+                const prodSnap = await getDoc(prodRef); 
+                if (prodSnap.exists()) {
+                    const currentStock = prodSnap.data().stock || 0;
+                    const newStock = currentStock + item.quantity;
+                    await updateDoc(prodRef, { stock: newStock }); 
                 }
-                return Promise.resolve();
-            });
-            await Promise.all(stockReturnUpdates);
+            }
             
             // 2. CASHBOX UPDATE (NEU)
             let newCashBoxBalance = cashBoxBalance;
@@ -1580,7 +1600,7 @@
     }
 
 
-    // MODIFIZIERT: handleReversal (für STOCK & CASH UPDATE)
+    // MODIFIZIERT: handleReversal (KORRIGIERT: STOCK RETURN LOGIC)
     window.handleReversal = async function(transactionId, index){
         if(!currentUser) return;
         const transaction = transactionHistory[index];
@@ -1591,18 +1611,18 @@
         window.showLoading(true);
         
         try{
-            // 1. STOCK RETURN (NEU)
-            const stockReturnUpdates = transaction.items.map(item => {
+            // KORREKTUR 1: STOCK RETURN - Aktuellen Bestand vor dem Update lesen
+            for (const item of transaction.items) {
                 const prodRef = doc(productsCollectionRef(currentUser.uid), item.id);
-                const product = products[item.id];
-                if (product && product.stock !== undefined) {
-                    return updateDoc(prodRef, { stock: product.stock + item.quantity });
+                const prodSnap = await getDoc(prodRef); 
+                if (prodSnap.exists()) {
+                    const currentStock = prodSnap.data().stock || 0;
+                    const newStock = currentStock + item.quantity;
+                    await updateDoc(prodRef, { stock: newStock }); 
                 }
-                return Promise.resolve();
-            });
-            await Promise.all(stockReturnUpdates);
+            }
             
-            // 2. CASHBOX UPDATE (NEU)
+            // 2. CASHBOX UPDATE 
             let newCashBoxBalance = cashBoxBalance;
             if (transaction.paymentMethod === 'BAR') {
                 newCashBoxBalance -= transaction.totalBrutto;
