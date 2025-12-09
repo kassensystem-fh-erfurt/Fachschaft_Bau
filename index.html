@@ -546,7 +546,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, updateDoc, getDoc, query, where, orderBy, limit, getDocs, addDoc, runTransaction, writeBatch } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, updateDoc, getDoc, query, where, orderBy, limit, getDocs, addDoc, runTransaction, writeBatch, increment } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     
     // ---------- Global State ----------
     let currentBestellung = [];
@@ -952,7 +952,14 @@
             const prodSnapshot = await getDocs(prodQuery);
             products = {};
             prodSnapshot.forEach(doc => {
-                products[doc.id] = { id: doc.id, ...doc.data() };
+                const data = doc.data();
+                products[doc.id] = { 
+                    id: doc.id, 
+                    ...data,
+                    // FIX: Explizite Konvertierung zu Number, um TypeError zu vermeiden
+                    price: parseFloat(data.price), 
+                    stock: parseInt(data.stock) 
+                };
             });
 
             window.renderCategoryTabs();
@@ -1517,9 +1524,9 @@
 
             // Kassenstand aktualisieren (nur bei BAR)
             if (paymentMethod === 'BAR') { 
-                const diff = amountToPay; // amountToPay ist hier der Betrag ohne Aufschlag (totalBrutto)
+                const diff = totalBrutto; // Nur den Warenwert (ohne Aufschlag) zur BAR-Kasse hinzufügen
                 await updateDoc(settingsDocRef(currentUser.uid), { 
-                    cashBoxBalance: cashBoxBalance + diff 
+                    cashBoxBalance: increment(diff) 
                 }); 
                 cashBoxBalance += diff; 
             } 
@@ -1711,9 +1718,9 @@
             totalSales += t.totalBrutto;
             totalSurcharge += t.surcharge || 0.00; // NEU: Aufschlag aggregieren
             if (t.paymentMethod === 'BAR') {
-                totalCashSales += t.totalBrutto;
+                totalCashSales += t.originalTotal; // Nur den Warenwert (originalTotal) zur BAR-Kasse hinzufügen
             } else {
-                totalCardSales += t.totalBrutto;
+                totalCardSales += t.totalBrutto; // Karten-Umsatz inkl. Aufschlag
             }
 
             t.items.forEach(item => {
@@ -1741,6 +1748,7 @@
         const grossSales = totalSales; // Brutto-Umsatz inkl. Aufschlag
         const grossSalesOriginal = grossSales - totalSurcharge; // Brutto-Umsatz ohne Aufschlag
         
+        // ACHTUNG: totalCashMovement sollte nur BAR-Umsatz (ohne Aufschlag) plus Einlagen minus Entnahmen/Stornos sein
         const totalCashMovement = (totalCashSales + totalInlays) - totalRemovals;
 
         // Report HTML generieren
@@ -1758,8 +1766,8 @@
             <div class="line total-line mb-3"><span>GESAMTEINNAHMEN BRUTTO:</span><span>${grossSales.toFixed(2).replace('.', ',')} €</span></div>
             <div class="line"><span>- Brutto (Ohne Aufschlag):</span><span>${grossSalesOriginal.toFixed(2).replace('.', ',')} €</span></div>
             <div class="line"><span>- Karten-Aufschlag (1,39%):</span><span>${totalSurcharge.toFixed(2).replace('.', ',')} €</span></div>
-            <div class="line"><span>- Bar-Umsatz:</span><span>${totalCashSales.toFixed(2).replace('.', ',')} €</span></div>
-            <div class="line"><span>- Karten-Umsatz:</span><span>${totalCardSales.toFixed(2).replace('.', ',')} €</span></div>
+            <div class="line"><span>- Bar-Umsatz (Original):</span><span>${totalCashSales.toFixed(2).replace('.', ',')} €</span></div>
+            <div class="line"><span>- Karten-Umsatz (Inkl. Aufschlag):</span><span>${totalCardSales.toFixed(2).replace('.', ',')} €</span></div>
             <div class="separator"></div>
             <div class="line"><span>Gesamtumsatz Netto:</span><span>${netSales.toFixed(2).replace('.', ',')} €</span></div>
             <div class="line"><span>Gesamtsteuer:</span><span>${totalTax.toFixed(2).replace('.', ',')} €</span></div>
@@ -1773,6 +1781,7 @@
         reportHtml += `
             <div class="separator"></div>
             <div class="line font-bold"><span>BAR-Kassenbewegungen:</span><span></span></div>
+            <div class="line"><span>- Bar-Umsatz (Original):</span><span>+ ${totalCashSales.toFixed(2).replace('.', ',')} €</span></div>
             <div class="line"><span>- Einlagen:</span><span>+ ${totalInlays.toFixed(2).replace('.', ',')} €</span></div>
             <div class="line"><span>- Entnahmen/Storno-Ausz.:</span><span>- ${totalRemovals.toFixed(2).replace('.', ',')} €</span></div>
             <div class="line total-line"><span>BAR-SALDO (Umsatz-Entn.):</span><span>${totalCashMovement.toFixed(2).replace('.', ',')} €</span></div>
@@ -1843,8 +1852,8 @@
 
             // 2. Add cash movement (negative amount = removal/auszahlung)
             if(transaction.paymentMethod === 'BAR'){
-                // Storno-Auszahlung ist der gesamte Betrag, den der Kunde bezahlt hat (inkl. Aufschlag, falls BAR)
-                const amount = transaction.totalBrutto; 
+                // Storno-Auszahlung ist der gesamte Betrag, den der Kunde bezahlt hat (originalTotal)
+                const amount = transaction.originalTotal; 
                 await addDoc(cashMovementsCollectionRef(currentUser.uid), {
                     timestamp: new Date(),
                     type: 'STORNO-AUSZAHLUNG',
