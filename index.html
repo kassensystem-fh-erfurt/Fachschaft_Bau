@@ -547,9 +547,11 @@
   <div id="print-receipt-container" class="receipt-print" style="width: 80mm;"></div>
   
   <script type="module">
+    // *** KORRIGIERTE FIREBASE IMPORTE (FIX für initializeApp is not a function) ***
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-auth.js";
-    import { getFirestore, doc, collection, setDoc, getDoc, updateDoc, query, where, orderBy, getDocs, writeBatch, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-auth/dist/index.esm.js";
+    import { getFirestore, doc, collection, setDoc, getDoc, updateDoc, query, where, orderBy, getDocs, writeBatch, runTransaction, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore/dist/index.esm.js";
+    // *** ENDE KORRIGIERTE FIREBASE IMPORTE ***
 
     // Globaler Zustand
     let currentUser = null;
