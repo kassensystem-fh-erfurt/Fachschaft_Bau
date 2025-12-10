@@ -1339,7 +1339,7 @@
           item.quantity -= quantityToRemove;
           item.totalBrutto = item.quantity * product.price;
 
-          // Bestand zurückgeben
+          // Bestand zurückgeben (Lokal)
           product.stock += quantityToRemove;
 
           if (item.quantity <= 0) {
@@ -1356,7 +1356,7 @@
         if(product.stock < quantityToAdd) {
           window.showToast(`Nicht genügend Bestand! Nur noch ${product.stock}x verfügbar.`, 'error');
         } else {
-          // Stock reduzieren
+          // Stock reduzieren (Lokal)
           product.stock -= quantityToAdd;
           
           if(existingItem){
@@ -1389,7 +1389,7 @@
     window.clearBestellung = function(){
       if(currentBestellung.length === 0) return;
       if(confirm('Möchten Sie den aktuellen Bon wirklich löschen?')){
-        // Return stock to all products in the order
+        // Return stock to all products in the order (Lokal)
         currentBestellung.forEach(item => {
           if(products[item.id]) {
             products[item.id].stock += item.quantity;
@@ -1434,7 +1434,7 @@
     window.removeFromBestellungByIndex = function(index){
       const item = currentBestellung[index];
       if (item) {
-        // Stock zurückgeben
+        // Stock zurückgeben (Lokal)
         if (products[item.id]) {
           products[item.id].stock += item.quantity;
         }
@@ -1626,14 +1626,32 @@
             change: changeAmount
         };
         
-        await setDoc(doc(transactionsCollectionRef(currentUser.uid)), transactionData);
+        // --- KORREKTUR: Stock- und Transaktions-Update in einem Batch ---
+        const batch = writeBatch(db);
 
-        // Kassenstand aktualisieren (nur bei BAR)
+        // 1. Stock Updates hinzufügen (Persistierung des reduzierten Bestands)
+        currentBestellung.forEach(item => {
+            // Nur tatsächliche Produkte aktualisieren
+            if (products[item.id]) { 
+                const productRef = doc(productsCollectionRef(currentUser.uid), item.id);
+                // Der lokale `products[item.id].stock` wurde bereits in `addToBestellung` reduziert
+                batch.update(productRef, { stock: products[item.id].stock }); 
+            }
+        });
+
+        // 2. Transaktion hinzufügen
+        batch.set(doc(transactionsCollectionRef(currentUser.uid)), transactionData);
+
+        // 3. Kassenstand aktualisieren (nur bei BAR)
         if (paymentMethod === 'BAR') {
-            const diff = finalTotalBrutto; // Wenn BAR, ist dies nur der Artikel-Total (da feeAmount 0 war)
-            await updateDoc(settingsDocRef(currentUser.uid), { cashBoxBalance: cashBoxBalance + diff });
-            cashBoxBalance += diff; // Lokalen Stand aktualisieren
+            const diff = totalBrutto; // Gesamter Artikel-Bruttobetrag
+            const newBalance = cashBoxBalance + diff;
+            batch.update(settingsDocRef(currentUser.uid), { cashBoxBalance: newBalance });
+            cashBoxBalance = newBalance; // Lokalen Stand aktualisieren
         }
+        
+        await batch.commit();
+        // --- ENDE KORREKTUR ---
 
         window.showToast('Transaktion erfolgreich abgeschlossen.', 'success');
 
@@ -1680,6 +1698,10 @@
         window.showLoading(true);
         try{
             let newBalance = cashBoxBalance;
+            
+            // --- KORREKTUR: Batch verwenden für atomaren Update ---
+            const batch = writeBatch(db);
+
             if(type === 'EINLAGE'){
                 newBalance += amount;
                 window.showToast(`Einlage von ${amount.toFixed(2).replace('.', ',')} € gebucht.`, 'success');
@@ -1688,17 +1710,20 @@
                 window.showToast(`Entnahme von ${amount.toFixed(2).replace('.', ',')} € gebucht.`, 'error');
             }
 
-            // Transaktion für Bericht speichern
-            await setDoc(doc(transactionsCollectionRef(currentUser.uid)), {
+            // 1. Transaktion für Bericht speichern
+            batch.set(doc(transactionsCollectionRef(currentUser.uid)), {
                 type: (type === 'EINLAGE') ? 'CASH-EINLAGE' : 'CASH-ENTNAHME',
                 amount: amount,
                 timestamp: new Date(),
                 status: 'completed'
             });
 
-            // Kassenstand aktualisieren
-            await updateDoc(settingsDocRef(currentUser.uid), { cashBoxBalance: newBalance });
+            // 2. Kassenstand aktualisieren
+            batch.update(settingsDocRef(currentUser.uid), { cashBoxBalance: newBalance });
             cashBoxBalance = newBalance; // Lokalen Stand aktualisieren
+
+            await batch.commit(); // Batch commit
+            // --- ENDE KORREKTUR ---
 
             closeModal('cash-management-modal');
             window.loadTransactionHistory(); // Lade Historie neu
@@ -2003,11 +2028,15 @@
         if (transaction.status === 'cancelled') return window.showToast('Transaktion bereits storniert.', 'info');
         
         const totalBrutto = transaction.totalBrutto;
+        const batch = writeBatch(db); // NEU: Batch für alle Updates
 
-        // 1. Bestand zurückbuchen (nur für Waren)
+        // 1. Bestand zurückbuchen und in Datenbank persistieren
         transaction.items.filter(item => !item.isFee).forEach(item => {
             if(products[item.id]) {
-                products[item.id].stock += item.quantity;
+                products[item.id].stock += item.quantity; // LOCAL update
+                // NEU: Füge Stock-Update zur Batch hinzu
+                const productRef = doc(productsCollectionRef(currentUser.uid), item.id);
+                batch.update(productRef, { stock: products[item.id].stock });
             }
         });
 
@@ -2017,20 +2046,24 @@
             const newBalance = cashBoxBalance - diff;
             
             // Speichere die Storno-Auszahlung als separate Bewegung
-             await setDoc(doc(transactionsCollectionRef(currentUser.uid)), {
+            const stornoTransactionData = {
                 type: 'STORNO-AUSZAHLUNG',
                 amount: diff,
                 timestamp: new Date(),
                 status: 'completed'
-            });
+            };
+            batch.set(doc(transactionsCollectionRef(currentUser.uid)), stornoTransactionData);
 
             // Kassenstand aktualisieren
-            await updateDoc(settingsDocRef(currentUser.uid), { cashBoxBalance: newBalance });
+            batch.update(settingsDocRef(currentUser.uid), { cashBoxBalance: newBalance });
             cashBoxBalance = newBalance; // Lokalen Stand aktualisieren
         }
 
         // 3. Transaktion als storniert markieren
-        await updateDoc(transactionDocRef, { status: 'cancelled' });
+        batch.update(transactionDocRef, { status: 'cancelled' });
+        
+        // 4. Batch Commit
+        await batch.commit();
         
         window.showToast('Transaktion erfolgreich storniert.', 'success');
         
