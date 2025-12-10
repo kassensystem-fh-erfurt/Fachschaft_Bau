@@ -569,6 +569,7 @@
     let currentBestellung = []; // Aktueller Warenkorb (items)
     let totalBrutto = 0.00;
     let currentQuantity = 1; // Quantity for product booking
+    let quantityInputString = '1'; // Interner String zur korrekten Handhabung der Mehrfacheingabe (NEU)
     let isRemovalMode = false; // NEU: Steuert den Entfernungsmodus (ADD/REMOVE)
     let cashReceivedInput = '0'; // For the payment modal
     let cashPaymentMethod = 'BAR';
@@ -1251,9 +1252,12 @@
         });
     }
 
-    // ---------- Quantity Input & Mode ----------
+    // ---------- Quantity Input & Mode (KORRIGIERT) ----------
     window.updateQuantityDisplay = function(){
-      document.getElementById('quantity-display').innerText = currentQuantity;
+      // Verwendet den String für die korrekte Anzeige (NEU)
+      document.getElementById('quantity-display').innerText = quantityInputString;
+      // Aktualisiert den numerischen Wert für die Buchung
+      currentQuantity = parseInt(quantityInputString);
     }
 
     window.updateQuantityModeDisplay = function(){
@@ -1275,7 +1279,7 @@
 
     window.toggleQuantityMode = function(){
       isRemovalMode = !isRemovalMode;
-      currentQuantity = 1; // Menge auf 1 zurücksetzen beim Umschalten
+      quantityInputString = '1'; // Menge auf '1' zurücksetzen beim Umschalten (NEU)
       window.updateQuantityModeDisplay();
       window.updateQuantityDisplay();
       window.showToast(isRemovalMode ? 'Entfernungsmodus (DEL) aktiv.' : 'Hinzufügemodus (ADD) aktiv.', isRemovalMode ? 'error' : 'success');
@@ -1283,41 +1287,42 @@
 
     window.handleQuantityInput = function(key){
       if(key === 'clear'){
-        currentQuantity = 1;
+        quantityInputString = '1'; // Reset auf '1' (NEU)
       } else if (key.match(/^\d$/)){
-        const currentStr = currentQuantity.toString();
-        let newQuantity = 0;
+        let newString;
         
-        // *** KORRIGIERTE LOGIK FÜR DIE MENGENEINGABE ***
-        if (currentQuantity === 0 && key !== '0') {
-             newQuantity = parseInt(key); // Start bei 0, neue Ziffer ersetzt
-        } else if (currentQuantity === 1 && key === '0') {
-            newQuantity = 10;
-        } else if (currentQuantity === 1) { // 1 gefolgt von 2-9 oder 1
-            const appendedStr = currentStr + key; 
-            newQuantity = parseInt(appendedStr);
-        } else if (currentQuantity > 1) {
-            const appendedStr = currentStr + key;
-            newQuantity = parseInt(appendedStr);
+        // 1. Wenn die aktuelle Eingabe '1' ist und eine Ziffer (nicht 0) gedrückt wird, ersetzen.
+        if (quantityInputString === '1' && key !== '0') {
+            newString = key;
+        // 2. Wenn die aktuelle Eingabe '1' ist und '0' gedrückt wird, anhängen ('10').
+        } else if (quantityInputString === '1' && key === '0') {
+            newString = '10';
+        // 3. Wenn die aktuelle Eingabe bereits 2-stellig ist, blockieren.
+        } else if (quantityInputString.length >= 2) {
+            window.showToast('Maximal 99.', 'error');
+            return;
+        // 4. Alle anderen Fälle (z.B. 2 -> 25)
         } else {
-             // 5. Alle anderen Fälle (z.B. 0 -> x, oder bereits mehrstellig, falls 1. Fall nicht greift)
-             const appendedStr = currentStr + key;
-             newQuantity = parseInt(appendedStr);
+            newString = quantityInputString + key;
         }
-        
+
+        // Sicherheitsprüfung auf den Höchstwert 99
+        const newQuantity = parseInt(newString);
         if (newQuantity <= 99) {
-          currentQuantity = newQuantity;
+          quantityInputString = newString;
         } else {
           window.showToast('Maximal 99.', 'error');
+          return;
         }
       }
+      
       window.updateQuantityDisplay();
     }
     
     // ---------- Bestellung / Warenkorb ----------
     window.addToBestellung = function(productId){
       const product = products[productId];
-      const quantity = currentQuantity;
+      const quantity = currentQuantity; // Nutzt den aus quantityInputString abgeleiteten Wert
       
       if (!product) return window.showToast('Produkt nicht gefunden.', 'error');
 
@@ -1376,7 +1381,8 @@
       // Gemeinsame Updates
       window.renderProductGrid(product.categoryId || null);
       window.updateReceipt();
-      currentQuantity = 1; // Menge auf 1 zurücksetzen
+      // Setze quantityInputString auf '1' zurück und aktualisiere Anzeige
+      quantityInputString = '1'; 
       window.updateQuantityDisplay();
     }
 
