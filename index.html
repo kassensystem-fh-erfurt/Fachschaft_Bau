@@ -1544,16 +1544,14 @@
       window.updateCashChangeDisplay();
     }
     
+    // **FIX: Exakt-Button verwendet nun nur den Artikel-Gesamtbetrag (totalBrutto), da er nur für Barzahlung relevant ist.**
     window.setCashExact = function(){
-        // NEU: Verwendet finalTotalBrutto für exakte Zahlung
-        let finalTotalBrutto = totalBrutto;
-        if (userSettings.cardFeeRate > 0) {
-            const feeAmount = totalBrutto * (userSettings.cardFeeRate / 100);
-            finalTotalBrutto = totalBrutto + feeAmount;
-        }
+        // FÜR BAR-ZAHLUNG: Der exakte Betrag ist immer der Warenkorb-Brutto-Total (totalBrutto), 
+        // da die Kartengebühr bei Barzahlung nicht relevant ist.
+        const targetTotal = totalBrutto; 
         
         // Konvertiere den finalen Betrag in Cent und setze ihn als Input
-        cashReceivedInput = (Math.round(finalTotalBrutto * 100)).toString();
+        cashReceivedInput = (Math.round(targetTotal * 100)).toString();
         window.updateCashChangeDisplay();
     }
 
@@ -1603,7 +1601,7 @@
                 price: feeAmount,
                 quantity: 1,
                 totalBrutto: feeAmount,
-                taxRate: 0.0,
+                taxRate: 0.0, // Gebühren sind 0% MwSt.
                 isFee: true
             });
         }
@@ -1611,8 +1609,8 @@
         // Aktualisiere das Transaktionsobjekt
         const transactionData = {
             items: itemsForTransaction, // Enthält jetzt ggf. die Gebühr
-            totalBrutto: finalTotalBrutto, // Endbetrag inkl. Gebühr
-            totalNetto: summary.totalNetto + (feeAmount > 0 ? feeAmount : 0), // Gebühr zum Netto addieren (da 0% MwSt angenommen)
+            totalBrutto: finalTotalBrutto, // Endbetrag inkl. Gebühr (wenn KARTE)
+            totalNetto: summary.totalNetto + (feeAmount > 0 ? feeAmount : 0), // Netto inkl. Gebühr (da Gebühr als Netto ohne Steuer gilt)
             totalTax: summary.totalTax,
             taxSummary: summary.taxSummary,
             timestamp: new Date(),
@@ -1626,7 +1624,7 @@
 
         // Kassenstand aktualisieren (nur bei BAR)
         if (paymentMethod === 'BAR') {
-            const diff = finalTotalBrutto; // NEU: Der eingenommene Betrag ist der Gesamtbetrag inkl. Gebühr
+            const diff = finalTotalBrutto; // Wenn BAR, ist dies nur der Artikel-Total (da feeAmount 0 war)
             await updateDoc(settingsDocRef(currentUser.uid), { cashBoxBalance: cashBoxBalance + diff });
             cashBoxBalance += diff; // Lokalen Stand aktualisieren
         }
@@ -1717,13 +1715,12 @@
         return;
       }
       
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      // FIX: Robustere lokale Datumsgrenzen für die Firestore-Abfrage
+      const startOfDay = new Date(date + 'T00:00:00'); 
+      const endOfDay = new Date(date + 'T23:59:59'); 
+      endOfDay.setMilliseconds(999); // Um sicherzustellen, dass die letzte Millisekunde des Tages erfasst wird
 
       // 1. Transaktionen (inkl. Storno-Funktion)
-      // Lädt alle Transaktionen für den Tag (inkl. stornierter), damit sie in der Liste angezeigt werden können
       const q = query(transactionsCollectionRef(currentUser.uid), 
                       where('timestamp', '>=', startOfDay), 
                       where('timestamp', '<=', endOfDay), 
@@ -1735,20 +1732,20 @@
       window.showLoading(false);
     }
 
-    // KORREKTUR 2: FUNKTIONALITÄTS-FIX FÜR REPORT-BUTTONS
+    // KORREKTUR DER REPORT-LOGIK (Transparentere Darstellung von Gebühren und Sales)
     window.runDailyReport = async function(type){
       if (!currentUser) return;
       window.showLoading(true);
 
       // ZUERST: Sicherstellen, dass die Daten für den Bericht geladen sind.
-      await window.loadTransactionHistory();
+      //await window.loadTransactionHistory(); // Wird im Berichtsprozess selbst geladen
 
       const date = document.getElementById('report-date').value;
       
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      // FIX: Robustere lokale Datumsgrenzen für die Firestore-Abfrage
+      const startOfDay = new Date(date + 'T00:00:00'); 
+      const endOfDay = new Date(date + 'T23:59:59'); 
+      endOfDay.setMilliseconds(999); 
 
       // 1. Transaktionen für den Bericht laden: KEIN Status-Filter in der Firestore-Abfrage!
       const q = query(transactionsCollectionRef(currentUser.uid), 
@@ -1764,29 +1761,32 @@
       const cancelledSales = allTransactions.filter(t => t.status === 'cancelled'); // Stornierte Verkäufe
       const cashMovements = allTransactions.filter(t => t.type && t.type.includes('CASH')); // Kassenbewegungen
       
-      let totalSales = 0.00; // Gesamtumsatz (Verkäufe - Storno)
-      let totalCashSales = 0.00;
-      let totalCardSales = 0.00;
+      let totalSalesGross = 0.00; // Gesamter Bruttoumsatz (Artikel + Gebühren)
+      let totalCashSalesGross = 0.00;
+      let totalCardSalesGross = 0.00;
+      let totalFees = 0.00; // Summe der Kartengebühren (0% MwSt.)
       const taxTotals = {}; // { '19.0': {net: X, tax: Y, gross: Z}, '7.0': ... }
 
-      // Verkaufstransaktionen verarbeiten (inkl. Gebührenposten im items-Array)
-      const salesForReport = [...completedSales];
-
-      // Verkaufsaggregation (Netto, Steuer)
-      salesForReport.forEach(t => {
-        // Zuerst den Gesamtumsatz berechnen (totalBrutto ist der finale Preis inkl. Gebühren)
-        totalSales += t.totalBrutto;
+      // Verkaufstransaktionen verarbeiten
+      completedSales.forEach(t => {
+        // Gesamtumsatz Brutto
+        totalSalesGross += t.totalBrutto; 
         
         // Zahlungsmethode
-        if (t.paymentMethod === 'BAR') totalCashSales += t.totalBrutto;
-        if (t.paymentMethod === 'KARTE') totalCardSales += t.totalBrutto;
+        if (t.paymentMethod === 'BAR') totalCashSalesGross += t.totalBrutto;
+        if (t.paymentMethod === 'KARTE') totalCardSalesGross += t.totalBrutto;
 
-        // Steuern aggregieren, nur für Artikel, nicht für die Gebühr (isFee: true)
-        t.items.filter(item => !item.isFee).forEach(item => {
+        // Steuern aggregieren
+        t.items.forEach(item => {
+            if (item.isFee) {
+                totalFees += item.totalBrutto;
+                return;
+            }
+            
             const rateKey = item.taxRate.toFixed(1);
             if (!taxTotals[rateKey]) taxTotals[rateKey] = { net: 0, tax: 0, gross: 0 };
             
-            // Recalculate net/tax for safety, though it should be in taxSummary
+            // Recalculate net/tax for safety
             const brutto = item.totalBrutto;
             const taxFactor = item.taxRate / 100;
             const netto = brutto / (1 + taxFactor);
@@ -1798,14 +1798,19 @@
         });
       });
       
-      // Storno-Aggregation (NUR BAR/KARTE Stornos verringern den Umsatz)
+      // Storno-Aggregation (reduziert den Umsatz)
       cancelledSales.forEach(t => {
-        totalSales -= t.totalBrutto;
-        if (t.paymentMethod === 'BAR') totalCashSales -= t.totalBrutto;
-        if (t.paymentMethod === 'KARTE') totalCardSales -= t.totalBrutto;
+        totalSalesGross -= t.totalBrutto;
+        if (t.paymentMethod === 'BAR') totalCashSalesGross -= t.totalBrutto;
+        if (t.paymentMethod === 'KARTE') totalCardSalesGross -= t.totalBrutto;
 
         // Steuern aggregieren, nur für Artikel
-        t.items.filter(item => !item.isFee).forEach(item => {
+        t.items.forEach(item => {
+            if (item.isFee) {
+                totalFees -= item.totalBrutto; // Gebühr vom Storno abziehen
+                return;
+            }
+            
             const rateKey = item.taxRate.toFixed(1);
             if (!taxTotals[rateKey]) return; // Sollte existieren
             
@@ -1828,11 +1833,13 @@
         if(ct.type === 'CASH-ENTNAHME' || ct.type === 'STORNO-AUSZAHLUNG') totalRemovals += ct.amount;
       });
 
-      const netSales = Object.values(taxTotals).reduce((sum, t) => sum + t.net, 0);
+      // Summen der Steuer-Totals
+      const taxableSalesNet = Object.values(taxTotals).reduce((sum, t) => sum + t.net, 0);
       const totalTax = Object.values(taxTotals).reduce((sum, t) => sum + t.tax, 0);
-      const grossSales = totalSales; // Summe der Netto-Verkäufe + Steuer (inkl. Gebühren)
+      const taxableSalesGross = taxableSalesNet + totalTax;
 
-      const totalCashMovement = (totalCashSales + totalInlays) - totalRemovals;
+      // Die Kassenbewegung ist der Barumsatz + Einlagen - Entnahmen/Stornos
+      const totalCashMovement = (totalCashSalesGross + totalInlays) - totalRemovals;
 
       // Report HTML generieren
       const companyName = userSettings.companyName || 'Kassensystem';
@@ -1850,22 +1857,28 @@
         <div class="separator"></div>
 
         <div class="line total-line mb-3">
-          <span>GESAMTEINNAHMEN BRUTTO:</span><span>${grossSales.toFixed(2).replace('.', ',')} €</span>
+          <span>GESAMTEINNAHMEN BRUTTO:</span><span>${totalSalesGross.toFixed(2).replace('.', ',')} €</span>
         </div>
         <div class="line">
-          <span>- Bar-Umsatz:</span><span>${totalCashSales.toFixed(2).replace('.', ',')} €</span>
+          <span>- Bar-Umsatz Brutto:</span><span>${totalCashSalesGross.toFixed(2).replace('.', ',')} €</span>
         </div>
         <div class="line">
-          <span>- Karten-Umsatz:</span><span>${totalCardSales.toFixed(2).replace('.', ',')} €</span>
+          <span>- Karten-Umsatz Brutto:</span><span>${totalCardSalesGross.toFixed(2).replace('.', ',')} €</span>
+        </div>
+        <div class="line mb-2">
+          <span>- Gebühren-Umsatz Brutto (0% MwSt.):</span><span>${totalFees.toFixed(2).replace('.', ',')} €</span>
         </div>
 
         <div class="separator"></div>
 
         <div class="line">
-          <span>Gesamtumsatz Netto:</span><span>${netSales.toFixed(2).replace('.', ',')} €</span>
+          <span>Artikel-Umsatz Netto (ohne Gebühr):</span><span>${taxableSalesNet.toFixed(2).replace('.', ',')} €</span>
         </div>
         <div class="line">
-          <span>Gesamte Steuer (MwSt.):</span><span>${totalTax.toFixed(2).replace('.', ',')} €</span>
+          <span>Gesamte Steuer (MwSt. Artikel):</span><span>${totalTax.toFixed(2).replace('.', ',')} €</span>
+        </div>
+        <div class="line total-line mb-3">
+          <span>Artikel-Umsatz Brutto:</span><span>${taxableSalesGross.toFixed(2).replace('.', ',')} €</span>
         </div>
         <div class="separator"></div>
 
@@ -1881,8 +1894,8 @@
         
         reportHtml += `
         <div class="separator"></div>
-        <div class="text-center font-bold text-base mt-3 mb-1">KASSENBESTAND</div>
-        <div class="line"><span>Bar-Umsatz Brutto:</span><span>${totalCashSales.toFixed(2).replace('.', ',')} €</span></div>
+        <div class="text-center font-bold text-base mt-3 mb-1">KASSENBESTAND (BARGELD)</div>
+        <div class="line"><span>Bar-Umsatz Brutto:</span><span>${totalCashSalesGross.toFixed(2).replace('.', ',')} €</span></div>
         <div class="line"><span>+ Bareinlagen:</span><span>${totalInlays.toFixed(2).replace('.', ',')} €</span></div>
         <div class="line"><span>- Barentnahmen/Storno:</span><span>${totalRemovals.toFixed(2).replace('.', ',')} €</span></div>
         <div class="line total-line"><span>Kassenbestand Änderung:</span><span>${totalCashMovement.toFixed(2).replace('.', ',')} €</span></div>
@@ -1898,11 +1911,13 @@
         const csvContent = "data:text/csv;charset=utf-8," 
           + "Metrik;Wert\n"
           + `Datum;${date}\n`
-          + `GESAMTEINNAHMEN BRUTTO;${grossSales.toFixed(2)}\n`
-          + `Bar-Umsatz;${totalCashSales.toFixed(2)}\n`
-          + `Karten-Umsatz;${totalCardSales.toFixed(2)}\n`
-          + `Gesamtumsatz Netto;${netSales.toFixed(2)}\n`
-          + `Gesamte Steuer (MwSt.);${totalTax.toFixed(2)}\n`
+          + `GESAMTEINNAHMEN BRUTTO;${totalSalesGross.toFixed(2)}\n`
+          + `Bar-Umsatz Brutto;${totalCashSalesGross.toFixed(2)}\n`
+          + `Karten-Umsatz Brutto;${totalCardSalesGross.toFixed(2)}\n`
+          + `Gebühren-Umsatz Brutto (0% MwSt.);${totalFees.toFixed(2)}\n`
+          + `Artikel-Umsatz Netto (ohne Gebühr);${taxableSalesNet.toFixed(2)}\n`
+          + `Gesamte Steuer (MwSt. Artikel);${totalTax.toFixed(2)}\n`
+          + `Artikel-Umsatz Brutto;${taxableSalesGross.toFixed(2)}\n`
           + `Bareinlagen;${totalInlays.toFixed(2)}\n`
           + `Barentnahmen/Storno;${totalRemovals.toFixed(2)}\n`
           + `Kassenbestand Änderung;${totalCashMovement.toFixed(2)}\n`
@@ -2110,6 +2125,17 @@
             </div>
           `;
         });
+        
+        // Füge die Gebühr hinzu, falls vorhanden
+        const feeItem = items.find(item => item.isFee);
+        if(feeItem) {
+             content += `
+                <div class="separator"></div>
+                <div class="line text-xs font-bold text-red-600">
+                    <span>Gebühr (0% MwSt.):</span><span>${feeItem.totalBrutto.toFixed(2).replace('.', ',')} €</span>
+                </div>
+            `;
+        }
 
         content += `<div class="separator"></div>
         <div class="text-center text-xs mt-1">Vielen Dank für Ihren Besuch!</div>
