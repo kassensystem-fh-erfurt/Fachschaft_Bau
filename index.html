@@ -379,6 +379,8 @@
         <button onclick="window.openSecurityCodeSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-orange-600 hover:bg-orange-700">Sicherheitscode verwalten</button>
 
         <button onclick="window.openGeneralSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700">Kassenbon-Einstellungen</button>
+        
+        <button onclick="window.openCardFeeSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700">Kartenzahlungsgebühr verwalten</button>
         <button onclick="window.openProductModal();
  closeModal('settings-modal')" class="w-full p-3 rounded-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700">Produkt- & Kategorie-Verwaltung</button>
       </div>
@@ -409,11 +411,6 @@
      
           </div>
 
-          <div class="mb-6">
-            <label for="card-fee-rate" class="block text-sm font-medium text-gray-700">Kartenzahlungsgebühr (%)</label>
-            <input type="number" id="card-fee-rate" step="0.01" value="0.00" min="0" max="100" class="mt-1 w-full p-2 border rounded-lg">
-            <p class="text-xs text-gray-500 mt-1">Prozentsatz der Transaktionsgebühr für Kartenzahlungen.</p>
-          </div>
           <button type="button" onclick="window.saveSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-red-600">Speichern</button>
         </form>
         <button onclick="window.showSettingsMenu()" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück zum Menü</button>
@@ -432,9 +429,18 @@
         <button type="button" onclick="window.saveSecurityCode()" class="w-full p-3 rounded-lg font-bold text-white bg-red-600">Code speichern</button>
         <button onclick="window.showSettingsMenu()" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück zum Menü</button>
      
- 
       </div>
-
+      
+      <div id="card-fee-settings-container" style="display:none;">
+        <h3 class="text-xl font-bold text-red-700 mb-4 border-b pb-2">Kartenzahlungsgebühr</h3>
+        <p class="text-sm text-gray-500 mb-4">Legen Sie den Prozentsatz der Transaktionsgebühr für Kartenzahlungen fest.</p>
+        <div class="mb-6">
+            <label for="card-fee-rate" class="block text-sm font-medium text-gray-700">Kartenzahlungsgebühr (%)</label>
+            <input type="number" id="card-fee-rate" step="0.01" value="0.00" min="0" max="100" class="mt-1 w-full p-2 border rounded-lg">
+        </div>
+        <button type="button" onclick="window.saveCardFeeSettings()" class="w-full p-3 rounded-lg font-bold text-white bg-red-600">Gebühr speichern</button>
+        <button onclick="window.showSettingsMenu()" class="mt-4 w-full p-1 text-sm text-gray-500">Zurück zum Menü</button>
+      </div>
       <button onclick="closeModal('settings-modal')" id="btn-close-settings-modal" class="mt-6 w-full p-2 text-sm text-gray-500 border rounded-lg hover:bg-gray-100">Schließen</button>
     </div>
   </div>
@@ -706,6 +712,7 @@
       document.getElementById('settings-menu').style.display = 'block';
       document.getElementById('general-settings-form-container').style.display = 'none';
       document.getElementById('security-code-settings-container').style.display = 'none';
+      document.getElementById('card-fee-settings-container').style.display = 'none'; // NEU
       document.getElementById('btn-close-settings-modal').style.display = 'block';
     }
     
@@ -713,6 +720,7 @@
       document.getElementById('settings-menu').style.display = 'none';
       document.getElementById('general-settings-form-container').style.display = 'block';
       document.getElementById('security-code-settings-container').style.display = 'none';
+      document.getElementById('card-fee-settings-container').style.display = 'none'; // NEU
       document.getElementById('btn-close-settings-modal').style.display = 'none';
     }
     
@@ -720,7 +728,18 @@
       document.getElementById('settings-menu').style.display = 'none';
       document.getElementById('general-settings-form-container').style.display = 'none';
       document.getElementById('security-code-settings-container').style.display = 'block';
+      document.getElementById('card-fee-settings-container').style.display = 'none'; // NEU
       document.getElementById('reversal-code-separate').value = reversalCode;
+      document.getElementById('btn-close-settings-modal').style.display = 'none';
+    }
+    
+    // NEU: Funktion für Kartenzahlungsgebühr-Einstellungen
+    window.openCardFeeSettings = function(){
+      document.getElementById('settings-menu').style.display = 'none';
+      document.getElementById('general-settings-form-container').style.display = 'none';
+      document.getElementById('security-code-settings-container').style.display = 'none';
+      document.getElementById('card-fee-settings-container').style.display = 'block';
+      document.getElementById('card-fee-rate').value = userSettings.cardFeeRate !== undefined ? userSettings.cardFeeRate : 0.00; // Lade Wert
       document.getElementById('btn-close-settings-modal').style.display = 'none';
     }
 
@@ -811,7 +830,7 @@
         taxRate: 19.0,
         reversalCode: '9999',
         cashBoxBalance: 50.00,
-        cardFeeRate: 0.00 // NEU: Initialwert für Kartengebühr
+        cardFeeRate: 0.00 // Initialwert für Kartengebühr
       });
 
       // 2. Kategorien initialisieren
@@ -846,7 +865,7 @@
       window.showToast('Erste Initialisierung abgeschlossen.', 'success');
     }
 
-    // ---------- Settings Management (MODIFIZIERT um neuen Code zu speichern) ----------
+    // ---------- Settings Management (MODIFIZIERT) ----------
     window.saveSecurityCode = async function(){
       if (!currentUser) return;
       window.showLoading(true);
@@ -875,7 +894,7 @@
           address: document.getElementById('address').value,
           taxId: document.getElementById('tax-id').value,
           taxRate: parseFloat(document.getElementById('tax-rate').value) || 19.0,
-          cardFeeRate: parseFloat(document.getElementById('card-fee-rate').value) || 0.00 // NEU: Kartenzahlungsgebühr speichern
+          // cardFeeRate hier entfernt
         };
         await updateDoc(settingsDocRef(currentUser.uid), settings);
         userSettings = {...userSettings, ...settings}; // Lokalen state aktualisieren
@@ -886,6 +905,25 @@
       } finally {
         window.showLoading(false);
       }
+    }
+
+    // NEU: Speichern der Kartenzahlungsgebühr
+    window.saveCardFeeSettings = async function(){
+        if (!currentUser) return;
+        window.showLoading(true);
+        try{
+            const newFeeRate = parseFloat(document.getElementById('card-fee-rate').value) || 0.00;
+            if (newFeeRate < 0) return window.showToast('Die Gebühr darf nicht negativ sein.', 'error');
+
+            await updateDoc(settingsDocRef(currentUser.uid), { cardFeeRate: newFeeRate });
+            userSettings.cardFeeRate = newFeeRate; // Lokalen state aktualisieren
+            window.showToast('Kartenzahlungsgebühr gespeichert.', 'success');
+            closeModal('settings-modal');
+        } catch(err){
+            window.showToast('Fehler beim Speichern der Kartenzahlungsgebühr.', 'error');
+        } finally {
+            window.showLoading(false);
+        }
     }
 
     window.loadSettings = async function(){
@@ -903,9 +941,6 @@
           document.getElementById('tax-id').value = loadedSettings.taxId || '';
           document.getElementById('tax-rate').value = loadedSettings.taxRate || 19.0;
           
-          // NEU: Kartenzahlungsgebühr laden
-          document.getElementById('card-fee-rate').value = loadedSettings.cardFeeRate !== undefined ? loadedSettings.cardFeeRate : 0.00;
-
           // Setzt die globalen Variablen
           reversalCode = loadedSettings.reversalCode || '';
           cashBoxBalance = loadedSettings.cashBoxBalance || 0.00; 
@@ -917,7 +952,7 @@
           // Sollte nicht passieren, wenn seedUserDataIfNeeded erfolgreich war
           window.showToast('Keine Einstellungen gefunden. Daten werden neu initialisiert.', 'error');
           await seedUserDataIfNeeded(currentUser.uid);
-          window.loadSettings(); // Lade erneut, um das neue Feld zu initialisieren
+          window.loadSettings(); // Lade erneut
         }
       } catch(err){
         window.showToast('Fehler beim Laden der Einstellungen.', 'error');
@@ -983,7 +1018,10 @@
         const prodSnapshot = await getDocs(productsCollectionRef(currentUser.uid));
         products = {};
         prodSnapshot.forEach(doc => {
-          products[doc.id] = { id: doc.id, ...doc.data() };
+          const data = doc.data();
+          // FIX: Sicherstellen, dass der Preis eine Zahl ist
+          data.price = parseFloat(data.price) || 0.00; 
+          products[doc.id] = { id: doc.id, ...data };
         });
 
         window.renderCategoryTabs();
