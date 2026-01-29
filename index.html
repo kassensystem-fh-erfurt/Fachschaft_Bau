@@ -3,63 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIM 2026 - Kommunikation v3</title>
+    <title>BIM 2026 - Secure Login</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --primary: #007bff; --dark: #121212; --light: #2c2c2c; --danger: #dc3545; --success: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
-        .sidebar { width: 260px; background: var(--light); border-right: 1px solid #444; display: flex; flex-direction: column; flex-shrink: 0; }
-        .header { padding: 20px; border-bottom: 1px solid #444; text-align: center; }
-        .btn-auth { border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.3s; }
-        #login-btn { background: var(--primary); color: white; }
-        #logout-btn { background: var(--danger); color: white; display: none; }
-        
-        /* Main Container */
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
+        /* Sidebar & Auth */
+        .sidebar { width: 280px; background: var(--light); border-right: 1px solid #444; display: flex; flex-direction: column; flex-shrink: 0; }
+        .auth-container { padding: 20px; border-bottom: 1px solid #444; }
+        .auth-input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #444; background: #111; color: white; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 5px; }
+        .btn-auth { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; font-size: 12px; }
+        #login-btn { background: var(--primary); }
+        #register-btn { background: #555; }
+        #logout-btn { background: var(--danger); display: none; margin-top: 10px; width: 100%; }
 
-        /* Video Area (Unabhängig oben) */
-        #video-section { background: #000; height: 250px; flex-shrink: 0; position: relative; display: flex; border-bottom: 2px solid #333; }
+        /* Main UI */
+        .main { flex: 1; display: flex; flex-direction: column; }
+        #video-section { background: #000; height: 220px; position: relative; display: flex; border-bottom: 2px solid #333; }
         #video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; height: 100%; padding: 5px; }
         video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: #222; transform: scaleX(-1); }
         
-        /* Video Controls Overlay */
-        .video-controls { 
-            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 10px; z-index: 10; background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 30px;
-        }
-
-        /* Chat Area (Füllt den Rest) */
-        #chat-section { flex: 1; display: flex; flex-direction: column; background: #181818; min-height: 0; }
+        #chat-section { flex: 1; display: flex; flex-direction: column; background: #181818; }
         #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 14px; line-height: 1.4; }
-        .sent { background: var(--primary); align-self: flex-end; border-bottom-right-radius: 2px; }
-        .received { background: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .user-label { font-size: 10px; opacity: 0.5; margin-bottom: 3px; display: block; }
+        .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 14px; }
+        .sent { background: var(--primary); align-self: flex-end; }
+        .received { background: #333; align-self: flex-start; }
 
-        /* Footer / Input */
-        .input-bar { padding: 15px; background: var(--light); display: flex; gap: 10px; align-items: center; border-top: 1px solid #444; }
-        input { flex: 1; padding: 12px 18px; border-radius: 25px; border: 1px solid #444; background: #111; color: white; outline: none; }
-        
-        .btn-action { width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; }
-        .bg-gray { background: #555; }
-        .bg-green { background: var(--success); }
-        .bg-blue { background: var(--primary); }
-        .off { background: var(--danger) !important; }
+        .input-bar { padding: 15px; background: var(--light); display: flex; gap: 10px; border-top: 1px solid #444; }
+        .btn-action { width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        input[type="text"] { flex: 1; padding: 12px; border-radius: 25px; border: none; background: #111; color: white; outline: none; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="header">
-            <h3>BIM 2026</h3>
-            <button id="login-btn" class="btn-auth">Anmelden</button>
-            <button id="logout-btn" class="btn-auth">Abmelden</button>
-            <div id="user-display" style="margin-top:15px; font-size: 14px; color: var(--primary);"></div>
+        <div class="auth-container" id="auth-ui">
+            <h3>BIM 2026 Login</h3>
+            <input type="email" id="email" class="auth-input" placeholder="E-Mail">
+            <input type="password" id="password" class="auth-input" placeholder="Passwort">
+            <div class="btn-group">
+                <button id="login-btn" class="btn-auth">Login</button>
+                <button id="register-btn" class="btn-auth">Registrieren</button>
+            </div>
         </div>
+        
+        <div class="auth-container" id="user-ui" style="display:none;">
+            <p id="user-info" style="color: var(--primary); font-weight: bold;"></p>
+            <button id="logout-btn" class="btn-auth">Abmelden</button>
+        </div>
+
         <div style="padding: 20px;">
-            <p style="font-size: 11px; color: #888;">Deine Anruf-ID:</p>
+            <p style="font-size: 11px; color: #888;">Deine Video-ID:</p>
             <div id="my-id-display" style="font-size: 22px; font-weight: bold; color: #ffc107;">...</div>
         </div>
     </div>
@@ -70,26 +66,21 @@
                 <video id="localVideo" autoplay playsinline muted></video>
                 <video id="remoteVideo" autoplay playsinline></video>
             </div>
-            <div class="video-controls" id="call-ui" style="display:none;">
-                <button class="btn-action bg-gray" id="mute-btn">🎤</button>
-                <button class="btn-action bg-gray" id="cam-btn">📷</button>
-                <button class="btn-action bg-red" style="background:var(--danger)" id="end-call-btn">✖</button>
-            </div>
         </div>
 
         <div id="chat-section">
             <div id="chat-box"></div>
             <div class="input-bar">
-                <button class="btn-action bg-green" id="make-call-btn">📞</button>
+                <button class="btn-action" style="background:var(--success)" id="call-btn">📞</button>
                 <input type="text" id="msgInput" placeholder="Nachricht...">
-                <button class="btn-action bg-blue" id="send-msg-btn">➤</button>
+                <button class="btn-action" style="background:var(--primary)" id="send-btn">➤</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -104,118 +95,84 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
 
         const peer = new Peer(Math.floor(1000 + Math.random() * 9000).toString());
-        let localStream = null;
-        let currentCall = null;
-        let unsubscribe = null; // Für Echtzeit-Chat
+        let localStream, unsubscribe;
 
-        // --- AUTH ---
-        document.getElementById('login-btn').onclick = () => signInWithPopup(auth, provider);
+        // --- AUTH LOGIK ---
+        document.getElementById('register-btn').onclick = () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            createUserWithEmailAndPassword(auth, email, pass).catch(e => alert(e.message));
+        };
+
+        document.getElementById('login-btn').onclick = () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, email, pass).catch(e => alert("Login fehlgeschlagen: " + e.message));
+        };
+
         document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.reload());
 
         onAuthStateChanged(auth, (user) => {
-            const loginBtn = document.getElementById('login-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-            const userDisplay = document.getElementById('user-display');
-
             if (user) {
-                loginBtn.style.display = 'none';
-                logoutBtn.style.display = 'block';
-                userDisplay.innerText = "Bereit: " + user.displayName;
-                startChatListener();
-            } else {
-                loginBtn.style.display = 'block';
-                logoutBtn.style.display = 'none';
-                userDisplay.innerText = "";
-                if(unsubscribe) unsubscribe();
+                document.getElementById('auth-ui').style.display = 'none';
+                document.getElementById('user-ui').style.display = 'block';
+                document.getElementById('user-info').innerText = user.email;
+                startChat();
             }
         });
 
-        // --- CHAT ---
-        async function sendMsg() {
-            const input = document.getElementById('msgInput');
-            if (!input.value.trim() || !auth.currentUser) return;
-            try {
-                await addDoc(collection(db, "messages"), {
-                    text: input.value,
-                    user: auth.currentUser.displayName,
-                    uid: auth.currentUser.uid,
-                    timestamp: serverTimestamp()
-                });
-                input.value = "";
-            } catch(e) { console.error(e); }
+        // --- CHAT LOGIK ---
+        async function send() {
+            const inp = document.getElementById('msgInput');
+            if(!inp.value.trim() || !auth.currentUser) return;
+            await addDoc(collection(db, "messages"), {
+                text: inp.value,
+                user: auth.currentUser.email,
+                uid: auth.currentUser.uid,
+                timestamp: serverTimestamp()
+            });
+            inp.value = "";
         }
+        document.getElementById('send-btn').onclick = send;
 
-        document.getElementById('send-msg-btn').onclick = sendMsg;
-        document.getElementById('msgInput').onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
-
-        function startChatListener() {
+        function startChat() {
             const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
             unsubscribe = onSnapshot(q, (snap) => {
                 const box = document.getElementById('chat-box');
                 box.innerHTML = "";
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const isMe = d.uid === auth.currentUser?.uid;
                     const div = document.createElement('div');
-                    div.className = `msg ${isMe ? 'sent' : 'received'}`;
-                    div.innerHTML = `<span class="user-label">${d.user}</span>${d.text}`;
+                    div.className = `msg ${d.uid === auth.currentUser.uid ? 'sent' : 'received'}`;
+                    div.innerHTML = `<small style="display:block;opacity:0.5">${d.user}</small>${d.text}`;
                     box.appendChild(div);
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
 
-        // --- VIDEO ---
+        // --- VIDEO LOGIK ---
         peer.on('open', id => document.getElementById('my-id-display').innerText = id);
-
-        async function initMedia() {
-            if (!localStream) {
-                localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-                document.getElementById('localVideo').srcObject = localStream;
-            }
-            document.getElementById('call-ui').style.display = 'flex';
-        }
-
-        document.getElementById('make-call-btn').onclick = async () => {
+        
+        document.getElementById('call-btn').onclick = async () => {
             const id = prompt("Partner ID:");
-            if (!id) return;
-            await initMedia();
-            currentCall = peer.call(id, localStream);
-            currentCall.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
+            if(!id) return;
+            localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+            document.getElementById('localVideo').srcObject = localStream;
+            const call = peer.call(id, localStream);
+            call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
         };
 
         peer.on('call', async call => {
-            if (confirm("Anruf annehmen?")) {
-                await initMedia();
+            if(confirm("Anruf annehmen?")) {
+                localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+                document.getElementById('localVideo').srcObject = localStream;
                 call.answer(localStream);
-                currentCall = call;
                 call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
             }
         });
-
-        document.getElementById('mute-btn').onclick = () => {
-            const t = localStream.getAudioTracks()[0];
-            t.enabled = !t.enabled;
-            document.getElementById('mute-btn').classList.toggle('off', !t.enabled);
-        };
-
-        document.getElementById('cam-btn').onclick = () => {
-            const t = localStream.getVideoTracks()[0];
-            t.enabled = !t.enabled;
-            document.getElementById('cam-btn').classList.toggle('off', !t.enabled);
-        };
-
-        document.getElementById('end-call-btn').onclick = () => {
-            if(currentCall) currentCall.close();
-            if(localStream) localStream.getTracks().forEach(t => t.stop());
-            localStream = null;
-            document.getElementById('localVideo').srcObject = null;
-            document.getElementById('remoteVideo').srcObject = null;
-            document.getElementById('call-ui').style.display = 'none';
-        };
     </script>
 </body>
 </html>
