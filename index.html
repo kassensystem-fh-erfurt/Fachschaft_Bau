@@ -3,92 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIM 2026 - Team Communicator</title>
+    <title>BIM 2026 - Team & Video Pro</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --primary: #007bff; --dark: #121212; --light: #2c2c2c; --danger: #dc3545; --success: #28a745; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
-        .sidebar { width: 280px; background: var(--light); border-right: 1px solid #444; display: flex; flex-direction: column; }
+        .sidebar { width: 280px; background: var(--light); border-right: 1px solid #444; display: flex; flex-direction: column; flex-shrink: 0; }
         .auth-box { padding: 20px; border-bottom: 1px solid #444; }
-        .auth-input { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: white; }
-        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-primary { background: var(--primary); width: 100%; }
-        .btn-logout { background: var(--danger); width: 100%; margin-top: 10px; }
-
-        /* Teams Liste */
-        .team-list { flex: 1; padding: 20px; overflow-y: auto; }
-        .team-item { padding: 12px; background: #333; margin-bottom: 8px; border-radius: 8px; cursor: pointer; border-left: 4px solid transparent; }
-        .team-item:hover { background: #444; }
-        .active-team { border-left-color: var(--primary); background: #444; }
-
-        /* Main Content */
-        .container { flex: 1; display: flex; flex-direction: column; }
+        .auth-input { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
         
-        /* Video Bereich (einzeln) */
-        #video-section { height: 30%; background: #000; display: flex; flex-direction: column; border-bottom: 2px solid #333; position: relative; }
-        #video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; height: 100%; padding: 5px; }
-        video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 8px; }
+        .team-list { flex: 1; padding: 15px; overflow-y: auto; }
+        .team-item { padding: 10px; background: #333; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .team-item:hover { background: #444; }
+        .active-room { border-left: 4px solid var(--primary); background: #444; }
 
-        /* Chat Bereich (einzeln) */
+        .main { flex: 1; display: flex; flex-direction: column; }
+        
+        /* Video Bereich */
+        #video-section { height: 280px; background: #000; position: relative; display: flex; border-bottom: 2px solid #333; }
+        #video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; padding: 5px; }
+        video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: #222; transform: scaleX(-1); }
+        
+        .video-controls { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 100; }
+        .btn-ctrl { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .bg-gray { background: #555; }
+        .bg-red { background: var(--danger); }
+        .bg-green { background: var(--success); }
+        .btn-off { background: var(--danger) !important; }
+
+        /* Chat Bereich */
         #chat-section { flex: 1; display: flex; flex-direction: column; background: #181818; }
-        #chat-header { padding: 15px; background: #222; border-bottom: 1px solid #444; font-weight: bold; }
-        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 15px; border-radius: 15px; max-width: 70%; font-size: 14px; }
+        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 14px; position: relative; }
         .sent { background: var(--primary); align-self: flex-end; }
         .received { background: #333; align-self: flex-start; }
+        .user-tag { font-size: 9px; opacity: 0.6; display: block; margin-bottom: 2px; }
 
-        .chat-input-area { padding: 15px; display: flex; gap: 10px; background: var(--light); }
-        input[type="text"] { flex: 1; padding: 12px; border-radius: 20px; border: none; background: #111; color: white; outline: none; }
-        
-        /* Video Buttons */
-        .video-ctrl { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 5px; }
-        .btn-small { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .input-area { padding: 15px; background: var(--light); display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #111; color: white; outline: none; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="auth-box" id="auth-ui">
+        <div class="auth-box" id="login-ui">
             <h3>BIM 2026</h3>
             <input type="email" id="email" class="auth-input" placeholder="E-Mail">
             <input type="password" id="password" class="auth-input" placeholder="Passwort">
-            <button id="login-btn" class="btn btn-primary">Login / Register</button>
+            <button onclick="handleAuth()" class="btn-ctrl bg-green" style="width:100%; border-radius:5px;">Login / Register</button>
         </div>
-
         <div class="auth-box" id="user-ui" style="display:none;">
-            <p id="user-email" style="margin:0; font-weight:bold; color:var(--primary);"></p>
-            <p style="font-size: 11px; color:#888; margin:5px 0;">Deine Feste ID: <span id="my-peer-id" style="color:var(--success)">...</span></p>
-            <button id="logout-btn" class="btn btn-logout">Abmelden</button>
+            <p id="display-email" style="margin:0; font-weight:bold; color:var(--primary); font-size:14px;"></p>
+            <p style="font-size:11px; color:#888;">ID: <span id="display-id" style="color:var(--success)"></span></p>
+            <button onclick="handleLogout()" class="bg-red" style="border:none; color:white; padding:5px; width:100%; border-radius:4px; cursor:pointer;">Abmelden</button>
         </div>
-
-        <div class="team-list" id="team-ui" style="display:none;">
-            <p style="font-size:12px; color:#888;">DEINE CHATS</p>
-            <div class="team-item active-team" onclick="switchRoom('Hauptraum')">📢 Hauptraum</div>
-            <div class="team-item" onclick="switchRoom('Team_A')">👥 Projekt Team A</div>
-            <div class="team-item" onclick="openPrivateChat()">👤 Privat-Chat (ID)</div>
+        <div class="team-list">
+            <p style="font-size:11px; color:#888;">CHATS</p>
+            <div class="team-item active-room" onclick="switchRoom('Hauptraum', this)">📢 Hauptraum</div>
+            <div class="team-item" onclick="switchRoom('Projekt_A', this)">👥 Projekt Team A</div>
+            <div class="team-item" onclick="startPrivateChat(this)">👤 Privat-Chat (ID)</div>
         </div>
     </div>
 
-    <div class="container">
+    <div class="main">
         <div id="video-section">
             <div id="video-grid">
                 <video id="localVideo" autoplay playsinline muted></video>
                 <video id="remoteVideo" autoplay playsinline></video>
             </div>
-            <div class="video-ctrl">
-                <button class="btn btn-small" style="background:var(--success)" id="call-start">📞</button>
-                <button class="btn btn-small" style="background:var(--danger)" id="call-stop">✖</button>
+            <div class="video-controls" id="controls" style="display:none;">
+                <button id="btn-mute" class="btn-ctrl bg-gray" onclick="toggleMute()">🎤</button>
+                <button id="btn-cam" class="btn-ctrl bg-gray" onclick="toggleCam()">📷</button>
+                <button class="btn-ctrl bg-red" onclick="endCall()">✖</button>
             </div>
         </div>
 
         <div id="chat-section">
-            <div id="chat-header">Raum: <span id="room-name">Hauptraum</span></div>
+            <div style="padding:10px; background:#222; font-size:13px;">Raum: <span id="current-room-title">Hauptraum</span></div>
             <div id="chat-messages"></div>
-            <div class="chat-input-area">
-                <input type="text" id="msgInput" placeholder="Nachricht senden...">
-                <button class="btn btn-primary" style="width:auto; padding: 0 20px;" id="sendBtn">Senden</button>
+            <div class="input-area">
+                <button class="btn-ctrl bg-green" onclick="makeCall()" title="Anrufen">📞</button>
+                <input type="text" id="msgInput" placeholder="Nachricht...">
+                <button class="btn-ctrl bg-green" style="background:var(--primary)" onclick="sendMsg()">➤</button>
             </div>
         </div>
     </div>
@@ -111,12 +108,11 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        let peer, localStream, currentCall;
+        let peer, localStream, currentCall, unsubscribeChat;
         let activeRoom = "Hauptraum";
-        let unsubscribeChat = null;
 
-        // --- AUTH & IDENTITÄT ---
-        document.getElementById('login-btn').onclick = async () => {
+        // --- AUTH ---
+        window.handleAuth = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             try {
@@ -126,68 +122,40 @@
             }
         };
 
-        document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.reload());
+        window.handleLogout = () => signOut(auth).then(() => location.reload());
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                document.getElementById('auth-ui').style.display = 'none';
+                document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('user-ui').style.display = 'block';
-                document.getElementById('team-ui').style.display = 'block';
-                document.getElementById('user-email').innerText = user.email;
+                document.getElementById('display-email').innerText = user.email;
+                const myId = user.uid.substring(0, 5);
+                document.getElementById('display-id').innerText = myId;
                 
-                // Feste ID = Erste 5 Zeichen der Firebase UID (oder ganze UID)
-                const myPermanentId = user.uid.substring(0, 5);
-                document.getElementById('my-peer-id').innerText = myPermanentId;
-                
-                initPeer(myPermanentId);
+                initPeer(myId);
                 loadChat(activeRoom);
             }
         });
 
-        // --- VIDEO (Feste ID) ---
-        function initPeer(id) {
-            peer = new Peer(id); // Hier wird die feste ID gesetzt
-            peer.on('call', async call => {
-                if(confirm("Anruf von " + call.peer + " annehmen?")) {
-                    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-                    document.getElementById('localVideo').srcObject = localStream;
-                    call.answer(localStream);
-                    call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
-                    currentCall = call;
-                }
-            });
-        }
-
-        document.getElementById('call-start').onclick = async () => {
-            const targetId = prompt("ID der Person eingeben:");
-            if(!targetId) return;
-            localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-            document.getElementById('localVideo').srcObject = localStream;
-            const call = peer.call(targetId, localStream);
-            call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
-            currentCall = call;
+        // --- CHAT LOGIK ---
+        window.switchRoom = (roomName, element) => {
+            activeRoom = roomName;
+            document.getElementById('current-room-title').innerText = roomName;
+            document.querySelectorAll('.team-item').forEach(el => el.classList.remove('active-room'));
+            element.classList.add('active-room');
+            loadChat(roomName);
         };
 
-        document.getElementById('call-stop').onclick = () => {
-            if(currentCall) currentCall.close();
-            if(localStream) localStream.getTracks().forEach(t => t.stop());
-            location.reload(); 
+        window.startPrivateChat = (element) => {
+            const otherId = prompt("Partner-ID eingeben:");
+            if (!otherId) return;
+            const myId = auth.currentUser.uid.substring(0, 5);
+            const roomID = "Privat_" + [myId, otherId].sort().join("_");
+            switchRoom(roomID, element);
         };
 
-        // --- CHAT (Team & Räume) ---
-        window.switchRoom = (name) => {
-            activeRoom = name;
-            document.getElementById('room-name').innerText = name;
-            loadChat(name);
-        };
-
-        window.openPrivateChat = () => {
-            const partnerId = prompt("Mit welcher User-ID möchtest du chatten?");
-            if(partnerId) switchRoom("Privat_" + [auth.currentUser.uid.substring(0,5), partnerId].sort().join("_"));
-        };
-
-        async function loadChat(room) {
-            if(unsubscribeChat) unsubscribeChat();
+        function loadChat(room) {
+            if (unsubscribeChat) unsubscribeChat();
             const q = query(collection(db, "messages"), where("room", "==", room), orderBy("timestamp", "asc"));
             unsubscribeChat = onSnapshot(q, (snap) => {
                 const box = document.getElementById('chat-messages');
@@ -197,28 +165,76 @@
                     const isMe = d.uid === auth.currentUser.uid;
                     const div = document.createElement('div');
                     div.className = `msg ${isMe ? 'sent' : 'received'}`;
-                    div.innerHTML = `<small style="display:block; font-size:9px; opacity:0.6;">${d.user}</small>${d.text}`;
+                    div.innerHTML = `<span class="user-tag">${d.user}</span>${d.text}`;
                     box.appendChild(div);
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
 
-        async function send() {
+        window.sendMsg = async () => {
             const inp = document.getElementById('msgInput');
-            if(!inp.value.trim()) return;
+            if (!inp.value.trim()) return;
             await addDoc(collection(db, "messages"), {
                 text: inp.value,
-                user: auth.currentUser.email,
+                user: auth.currentUser.email.split('@')[0],
                 uid: auth.currentUser.uid,
                 room: activeRoom,
                 timestamp: serverTimestamp()
             });
             inp.value = "";
-        }
-        document.getElementById('sendBtn').onclick = send;
-        document.getElementById('msgInput').onkeypress = (e) => { if(e.key === 'Enter') send(); };
+        };
 
+        // --- VIDEO & AUDIO ---
+        function initPeer(id) {
+            peer = new Peer(id);
+            peer.on('call', async call => {
+                if (confirm("Eingehender Anruf von " + call.peer)) {
+                    await startMedia();
+                    call.answer(localStream);
+                    handleCall(call);
+                }
+            });
+        }
+
+        async function startMedia() {
+            if (!localStream) {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+            }
+            document.getElementById('controls').style.display = 'flex';
+        }
+
+        window.makeCall = async () => {
+            const targetId = prompt("Ziel-ID:");
+            if (!targetId) return;
+            await startMedia();
+            const call = peer.call(targetId, localStream);
+            handleCall(call);
+        };
+
+        function handleCall(call) {
+            currentCall = call;
+            call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
+        }
+
+        window.toggleMute = () => {
+            const enabled = localStream.getAudioTracks()[0].enabled;
+            localStream.getAudioTracks()[0].enabled = !enabled;
+            document.getElementById('btn-mute').classList.toggle('btn-off', enabled);
+        };
+
+        window.toggleCam = () => {
+            const enabled = localStream.getVideoTracks()[0].enabled;
+            localStream.getVideoTracks()[0].enabled = !enabled;
+            document.getElementById('btn-cam').classList.toggle('btn-off', enabled);
+        };
+
+        window.endCall = () => {
+            location.reload(); // Einfachste Art den Stream sicher zu trennen
+        };
+
+        document.getElementById('msgInput').onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
     </script>
 </body>
 </html>
