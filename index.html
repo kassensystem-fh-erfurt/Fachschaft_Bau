@@ -3,42 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIM 2026 - Team & Video Pro</title>
+    <title>BIM 2026 - Team Pro Fix</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --primary: #007bff; --dark: #121212; --light: #2c2c2c; --danger: #dc3545; --success: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
         .sidebar { width: 280px; background: var(--light); border-right: 1px solid #444; display: flex; flex-direction: column; flex-shrink: 0; }
-        .auth-box { padding: 20px; border-bottom: 1px solid #444; }
+        .auth-box { padding: 15px; border-bottom: 1px solid #444; }
         .auth-input { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
         
-        .team-list { flex: 1; padding: 15px; overflow-y: auto; }
-        .team-item { padding: 10px; background: #333; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .team-section { flex: 1; padding: 15px; overflow-y: auto; }
+        .team-item { padding: 10px; background: #333; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 14px; border-left: 4px solid transparent; }
         .team-item:hover { background: #444; }
-        .active-room { border-left: 4px solid var(--primary); background: #444; }
+        .active-room { border-left-color: var(--primary); background: #444; }
 
         .main { flex: 1; display: flex; flex-direction: column; }
-        
-        /* Video Bereich */
-        #video-section { height: 280px; background: #000; position: relative; display: flex; border-bottom: 2px solid #333; }
+        #video-section { height: 260px; background: #000; position: relative; display: flex; border-bottom: 2px solid #333; }
         #video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; padding: 5px; }
         video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: #222; transform: scaleX(-1); }
         
-        .video-controls { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 100; }
-        .btn-ctrl { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .bg-gray { background: #555; }
-        .bg-red { background: var(--danger); }
-        .bg-green { background: var(--success); }
+        .video-controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+        .btn-ctrl { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; }
         .btn-off { background: var(--danger) !important; }
 
-        /* Chat Bereich */
         #chat-section { flex: 1; display: flex; flex-direction: column; background: #181818; }
-        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 14px; position: relative; }
+        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; font-size: 14px; }
         .sent { background: var(--primary); align-self: flex-end; }
         .received { background: #333; align-self: flex-start; }
-        .user-tag { font-size: 9px; opacity: 0.6; display: block; margin-bottom: 2px; }
 
         .input-area { padding: 15px; background: var(--light); display: flex; gap: 10px; }
         input[type="text"] { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #111; color: white; outline: none; }
@@ -48,21 +41,24 @@
 
     <div class="sidebar">
         <div class="auth-box" id="login-ui">
-            <h3>BIM 2026</h3>
+            <h3>BIM 2026 Login</h3>
             <input type="email" id="email" class="auth-input" placeholder="E-Mail">
             <input type="password" id="password" class="auth-input" placeholder="Passwort">
-            <button onclick="handleAuth()" class="btn-ctrl bg-green" style="width:100%; border-radius:5px;">Login / Register</button>
+            <button onclick="handleAuth()" class="btn-ctrl" style="width:100%; border-radius:5px; background:var(--success)">Login / Register</button>
         </div>
         <div class="auth-box" id="user-ui" style="display:none;">
-            <p id="display-email" style="margin:0; font-weight:bold; color:var(--primary); font-size:14px;"></p>
-            <p style="font-size:11px; color:#888;">ID: <span id="display-id" style="color:var(--success)"></span></p>
-            <button onclick="handleLogout()" class="bg-red" style="border:none; color:white; padding:5px; width:100%; border-radius:4px; cursor:pointer;">Abmelden</button>
+            <p id="display-email" style="margin:0; font-weight:bold; color:var(--primary); font-size:13px;"></p>
+            <p style="font-size:11px; color:#888;">Deine ID: <span id="display-id" style="color:var(--success)"></span></p>
+            <button onclick="handleLogout()" style="background:var(--danger); color:white; border:none; width:100%; cursor:pointer; padding:5px; border-radius:4px;">Logout</button>
         </div>
-        <div class="team-list">
-            <p style="font-size:11px; color:#888;">CHATS</p>
-            <div class="team-item active-room" onclick="switchRoom('Hauptraum', this)">📢 Hauptraum</div>
-            <div class="team-item" onclick="switchRoom('Projekt_A', this)">👥 Projekt Team A</div>
-            <div class="team-item" onclick="startPrivateChat(this)">👤 Privat-Chat (ID)</div>
+        
+        <div class="team-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:11px; color:#888;">TEAMS</span>
+                <button onclick="createNewTeam()" style="background:none; border:1px solid #555; color:white; cursor:pointer; border-radius:3px;">+</button>
+            </div>
+            <div id="team-list-container">
+                </div>
         </div>
     </div>
 
@@ -73,19 +69,19 @@
                 <video id="remoteVideo" autoplay playsinline></video>
             </div>
             <div class="video-controls" id="controls" style="display:none;">
-                <button id="btn-mute" class="btn-ctrl bg-gray" onclick="toggleMute()">🎤</button>
-                <button id="btn-cam" class="btn-ctrl bg-gray" onclick="toggleCam()">📷</button>
-                <button class="btn-ctrl bg-red" onclick="endCall()">✖</button>
+                <button id="btn-mute" class="btn-ctrl" style="background:#555" onclick="toggleMute()">🎤</button>
+                <button id="btn-cam" class="btn-ctrl" style="background:#555" onclick="toggleCam()">📷</button>
+                <button class="btn-ctrl" style="background:var(--danger)" onclick="location.reload()">✖</button>
             </div>
         </div>
 
         <div id="chat-section">
-            <div style="padding:10px; background:#222; font-size:13px;">Raum: <span id="current-room-title">Hauptraum</span></div>
+            <div style="padding:10px; background:#222; font-size:13px; border-bottom:1px solid #333;">Raum: <span id="current-room-title">Wähle ein Team</span></div>
             <div id="chat-messages"></div>
             <div class="input-area">
-                <button class="btn-ctrl bg-green" onclick="makeCall()" title="Anrufen">📞</button>
+                <button class="btn-ctrl" style="background:var(--success)" onclick="makeCall()">📞</button>
                 <input type="text" id="msgInput" placeholder="Nachricht...">
-                <button class="btn-ctrl bg-green" style="background:var(--primary)" onclick="sendMsg()">➤</button>
+                <button class="btn-ctrl" style="background:var(--primary)" onclick="sendMsg()">➤</button>
             </div>
         </div>
     </div>
@@ -108,8 +104,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        let peer, localStream, currentCall, unsubscribeChat;
-        let activeRoom = "Hauptraum";
+        let peer, localStream, unsubscribeChat, activeRoom = null;
 
         // --- AUTH ---
         window.handleAuth = async () => {
@@ -131,50 +126,63 @@
                 document.getElementById('display-email').innerText = user.email;
                 const myId = user.uid.substring(0, 5);
                 document.getElementById('display-id').innerText = myId;
-                
                 initPeer(myId);
-                loadChat(activeRoom);
+                loadTeams();
             }
         });
 
-        // --- CHAT LOGIK ---
-        window.switchRoom = (roomName, element) => {
-            activeRoom = roomName;
-            document.getElementById('current-room-title').innerText = roomName;
-            document.querySelectorAll('.team-item').forEach(el => el.classList.remove('active-room'));
-            element.classList.add('active-room');
-            loadChat(roomName);
+        // --- TEAM VERWALTUNG ---
+        window.createNewTeam = async () => {
+            const name = prompt("Name des neuen Teams:");
+            if (!name) return;
+            await addDoc(collection(db, "teams"), { name: name, createdBy: auth.currentUser.uid });
         };
 
-        window.startPrivateChat = (element) => {
-            const otherId = prompt("Partner-ID eingeben:");
-            if (!otherId) return;
-            const myId = auth.currentUser.uid.substring(0, 5);
-            const roomID = "Privat_" + [myId, otherId].sort().join("_");
-            switchRoom(roomID, element);
+        function loadTeams() {
+            onSnapshot(collection(db, "teams"), (snap) => {
+                const list = document.getElementById('team-list-container');
+                list.innerHTML = `<div class="team-item" id="item-Hauptraum" onclick="switchRoom('Hauptraum')">📢 Hauptraum</div>`;
+                snap.forEach(doc => {
+                    const team = doc.data();
+                    list.innerHTML += `<div class="team-item" id="item-${doc.id}" onclick="switchRoom('${doc.id}', '${team.name}')">👥 ${team.name}</div>`;
+                });
+            });
+        }
+
+        // --- CHAT ---
+        window.switchRoom = (roomId, displayName = "Hauptraum") => {
+            activeRoom = roomId;
+            document.getElementById('current-room-title').innerText = displayName;
+            document.querySelectorAll('.team-item').forEach(el => el.classList.remove('active-room'));
+            const activeEl = document.getElementById('item-' + roomId);
+            if(activeEl) activeEl.classList.add('active-room');
+            loadChat(roomId);
         };
 
         function loadChat(room) {
             if (unsubscribeChat) unsubscribeChat();
             const q = query(collection(db, "messages"), where("room", "==", room), orderBy("timestamp", "asc"));
+            
+            // WICHTIG: Falls hier nichts ankommt, F12 drücken und dem Link in der Konsole folgen!
             unsubscribeChat = onSnapshot(q, (snap) => {
                 const box = document.getElementById('chat-messages');
                 box.innerHTML = "";
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const isMe = d.uid === auth.currentUser.uid;
                     const div = document.createElement('div');
-                    div.className = `msg ${isMe ? 'sent' : 'received'}`;
-                    div.innerHTML = `<span class="user-tag">${d.user}</span>${d.text}`;
+                    div.className = `msg ${d.uid === auth.currentUser.uid ? 'sent' : 'received'}`;
+                    div.innerHTML = `<small style="display:block; font-size:9px; opacity:0.5;">${d.user}</small>${d.text}`;
                     box.appendChild(div);
                 });
                 box.scrollTop = box.scrollHeight;
+            }, (error) => {
+                console.error("Chat Error (Index fehlt?):", error);
             });
         }
 
         window.sendMsg = async () => {
             const inp = document.getElementById('msgInput');
-            if (!inp.value.trim()) return;
+            if (!inp.value.trim() || !activeRoom) return;
             await addDoc(collection(db, "messages"), {
                 text: inp.value,
                 user: auth.currentUser.email.split('@')[0],
@@ -185,56 +193,43 @@
             inp.value = "";
         };
 
-        // --- VIDEO & AUDIO ---
+        // --- VIDEO ---
         function initPeer(id) {
             peer = new Peer(id);
             peer.on('call', async call => {
-                if (confirm("Eingehender Anruf von " + call.peer)) {
-                    await startMedia();
+                if (confirm("Eingehender Anruf!")) {
+                    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+                    document.getElementById('localVideo').srcObject = localStream;
+                    document.getElementById('controls').style.display = 'flex';
                     call.answer(localStream);
-                    handleCall(call);
+                    call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
                 }
             });
         }
 
-        async function startMedia() {
-            if (!localStream) {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('localVideo').srcObject = localStream;
-            }
-            document.getElementById('controls').style.display = 'flex';
-        }
-
         window.makeCall = async () => {
-            const targetId = prompt("Ziel-ID:");
-            if (!targetId) return;
-            await startMedia();
-            const call = peer.call(targetId, localStream);
-            handleCall(call);
+            const tid = prompt("Ziel-ID:");
+            if(!tid) return;
+            localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+            document.getElementById('localVideo').srcObject = localStream;
+            document.getElementById('controls').style.display = 'flex';
+            const call = peer.call(tid, localStream);
+            call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
         };
 
-        function handleCall(call) {
-            currentCall = call;
-            call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
-        }
-
         window.toggleMute = () => {
-            const enabled = localStream.getAudioTracks()[0].enabled;
-            localStream.getAudioTracks()[0].enabled = !enabled;
-            document.getElementById('btn-mute').classList.toggle('btn-off', enabled);
+            const track = localStream.getAudioTracks()[0];
+            track.enabled = !track.enabled;
+            document.getElementById('btn-mute').classList.toggle('btn-off', !track.enabled);
         };
 
         window.toggleCam = () => {
-            const enabled = localStream.getVideoTracks()[0].enabled;
-            localStream.getVideoTracks()[0].enabled = !enabled;
-            document.getElementById('btn-cam').classList.toggle('btn-off', enabled);
+            const track = localStream.getVideoTracks()[0];
+            track.enabled = !track.enabled;
+            document.getElementById('btn-cam').classList.toggle('btn-off', !track.enabled);
         };
 
-        window.endCall = () => {
-            location.reload(); // Einfachste Art den Stream sicher zu trennen
-        };
-
-        document.getElementById('msgInput').onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
+        document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') sendMsg(); };
     </script>
 </body>
 </html>
