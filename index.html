@@ -3,93 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIM 2026 - Ultimate Team Manager</title>
+    <title>BIM 2026 - Stable Connect</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --primary: #007bff; --dark: #121212; --light: #2c2c2c; --danger: #dc3545; --success: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
         /* Sidebar */
-        .sidebar { width: 300px; background: var(--light); border-right: 1px solid #444; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar { width: 280px; background: var(--light); border-right: 1px solid #444; display: flex; flex-direction: column; flex-shrink: 0; }
         .auth-box { padding: 15px; border-bottom: 1px solid #444; }
-        .auth-input { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+        .auth-input { width: 100%; padding: 8px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: white; }
         
-        .team-section { flex: 1; padding: 15px; overflow-y: auto; }
-        .team-item { padding: 12px; background: #333; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 14px; border-left: 4px solid transparent; display: flex; justify-content: space-between; align-items: center; }
-        .team-item:hover { background: #444; }
-        .active-room { border-left-color: var(--primary); background: #444; }
-        .add-member-btn { background: #555; border: none; color: white; border-radius: 3px; cursor: pointer; padding: 2px 6px; font-size: 12px; }
+        .team-list { flex: 1; padding: 15px; overflow-y: auto; }
+        .room-item { padding: 10px; background: #333; margin-bottom: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; border-left: 4px solid transparent; display: flex; justify-content: space-between; }
+        .active { border-left-color: var(--primary); background: #444; }
 
         /* Main Content */
         .main { flex: 1; display: flex; flex-direction: column; }
-        #video-section { height: 260px; background: #000; position: relative; display: flex; border-bottom: 2px solid #333; }
+        #video-area { height: 240px; background: #000; display: flex; position: relative; border-bottom: 2px solid #333; }
         #video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; padding: 5px; }
         video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: #222; transform: scaleX(-1); }
         
-        .video-controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10; }
-        .btn-ctrl { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.2s; }
-        .btn-off { background: var(--danger) !important; }
-
-        #chat-section { flex: 1; display: flex; flex-direction: column; background: #181818; overflow: hidden; }
-        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; font-size: 14px; position: relative; }
+        #chat-area { flex: 1; display: flex; flex-direction: column; background: #181818; }
+        #messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 14px; }
         .sent { background: var(--primary); align-self: flex-end; }
         .received { background: #333; align-self: flex-start; }
-        .user-tag { font-size: 9px; opacity: 0.5; display: block; margin-bottom: 3px; }
 
-        .input-area { padding: 15px; background: var(--light); display: flex; gap: 10px; border-top: 1px solid #333; }
-        input[type="text"] { flex: 1; padding: 12px 15px; border-radius: 20px; border: none; background: #111; color: white; outline: none; }
+        .input-bar { padding: 15px; background: var(--light); display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #111; color: white; outline: none; }
+        .btn { padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="auth-box" id="login-ui">
-            <h3 style="margin-top:0;">BIM 2026</h3>
+        <div class="auth-box" id="auth-ui">
+            <h3>BIM Login</h3>
             <input type="email" id="email" class="auth-input" placeholder="E-Mail">
             <input type="password" id="password" class="auth-input" placeholder="Passwort">
-            <button onclick="handleAuth()" class="btn-ctrl" style="width:100%; border-radius:5px; background:var(--success)">Anmelden / Registrieren</button>
+            <button onclick="authAction()" class="btn" style="background:var(--success); width:100%;">Login / Reg</button>
         </div>
-        
         <div class="auth-box" id="user-ui" style="display:none;">
-            <p id="display-email" style="margin:0; font-weight:bold; color:var(--primary); font-size:13px;"></p>
-            <p style="font-size:11px; color:#888; margin:5px 0;">Deine ID für Teams: <span id="display-id" style="color:var(--success); font-weight:bold;"></span></p>
-            <button onclick="handleLogout()" style="background:var(--danger); color:white; border:none; width:100%; cursor:pointer; padding:6px; border-radius:4px;">Abmelden</button>
+            <p id="u-mail" style="margin:0; font-size:12px; color:var(--primary);"></p>
+            <p style="font-size:11px; color:#888;">ID: <span id="u-id" style="color:var(--success)"></span></p>
+            <button onclick="logout()" class="btn" style="background:var(--danger); width:100%; padding:5px; font-size:11px;">Logout</button>
         </div>
-        
-        <div class="team-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:11px; color:#888; letter-spacing:1px;">MEINE TEAMS</span>
-                <button onclick="createNewTeam()" style="background:var(--primary); border:none; color:white; cursor:pointer; border-radius:3px; padding:2px 8px;">+</button>
+        <div class="team-list">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span style="font-size:11px; color:#888;">CHATS & TEAMS</span>
+                <button onclick="addTeam()" style="background:none; border:1px solid #555; color:white; cursor:pointer;">+</button>
             </div>
-            <div id="team-list-container">
-                <div class="team-item active-room" id="item-Hauptraum" onclick="switchRoom('Hauptraum')">📢 Hauptraum (Alle)</div>
+            <div id="rooms-container">
+                <div class="room-item active" onclick="setRoom('global')">📢 Hauptraum</div>
             </div>
         </div>
     </div>
 
     <div class="main">
-        <div id="video-section">
+        <div id="video-area">
             <div id="video-grid">
-                <video id="localVideo" autoplay playsinline muted></video>
-                <video id="remoteVideo" autoplay playsinline></video>
+                <video id="localVid" autoplay playsinline muted></video>
+                <video id="remoteVid" autoplay playsinline></video>
             </div>
-            <div class="video-controls" id="controls" style="display:none;">
-                <button id="btn-mute" class="btn-ctrl" style="background:#555" onclick="toggleMute()">🎤</button>
-                <button id="btn-cam" class="btn-ctrl" style="background:#555" onclick="toggleCam()">📷</button>
-                <button class="btn-ctrl" style="background:var(--danger)" onclick="location.reload()">✖</button>
+            <div style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:10px;">
+                <button onclick="toggleTrack('audio')" class="btn" style="background:#555">🎤</button>
+                <button onclick="toggleTrack('video')" class="btn" style="background:#555">📷</button>
+                <button onclick="location.reload()" class="btn" style="background:var(--danger)">✖</button>
             </div>
         </div>
 
-        <div id="chat-section">
-            <div style="padding:10px 20px; background:#222; font-size:13px; border-bottom:1px solid #333; color:#aaa;">
-                Raum: <span id="current-room-title" style="color:white; font-weight:bold;">Hauptraum</span>
-            </div>
-            <div id="chat-messages"></div>
-            <div class="input-area">
-                <button class="btn-ctrl" style="background:var(--success)" onclick="makeCall()">📞</button>
-                <input type="text" id="msgInput" placeholder="Nachricht schreiben...">
-                <button class="btn-ctrl" style="background:var(--primary)" onclick="sendMsg()">➤</button>
+        <div id="chat-area">
+            <div id="messages"></div>
+            <div class="input-bar">
+                <button onclick="callUser()" class="btn" style="background:var(--success)">📞</button>
+                <input type="text" id="mInp" placeholder="Nachricht...">
+                <button onclick="sendMsg()" class="btn" style="background:var(--primary)">➤</button>
             </div>
         </div>
     </div>
@@ -97,9 +86,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
+        const fbConfig = {
             apiKey: "AIzaSyB9Mw9ljgqeJztFtBEM2H7-c6k7XGy8zAw",
             authDomain: "projektmangerbim2026.firebaseapp.com",
             projectId: "projektmangerbim2026",
@@ -108,162 +97,132 @@
             appId: "1:88720534809:web:4da70e450799e1cc80a988"
         };
 
-        const app = initializeApp(firebaseConfig);
+        const app = initializeApp(fbConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        let peer, localStream, unsubscribeChat, activeRoom = "Hauptraum";
+        let peer, localStream, activeRoom = "global", myShortId;
 
         // --- AUTH ---
-        window.handleAuth = async () => {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            if(!email || !pass) return alert("Bitte Daten eingeben");
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch {
-                await createUserWithEmailAndPassword(auth, email, pass).catch(e => alert(e.message));
-            }
+        window.authAction = async () => {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            try { await signInWithEmailAndPassword(auth, e, p); } 
+            catch { await createUserWithEmailAndPassword(auth, e, p).catch(err => alert(err.message)); }
         };
 
-        window.handleLogout = () => signOut(auth).then(() => location.reload());
+        window.logout = () => signOut(auth).then(() => location.reload());
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                document.getElementById('login-ui').style.display = 'none';
+                document.getElementById('auth-ui').style.display = 'none';
                 document.getElementById('user-ui').style.display = 'block';
-                document.getElementById('display-email').innerText = user.email;
-                const myId = user.uid.substring(0, 5);
-                document.getElementById('display-id').innerText = myId;
-                initPeer(myId);
-                loadTeams();
-                switchRoom('Hauptraum');
+                document.getElementById('u-mail').innerText = user.email;
+                myShortId = user.uid.substring(0, 5);
+                document.getElementById('u-id').innerText = myShortId;
+                
+                initPeer(myShortId);
+                syncRooms();
+                syncMessages();
             }
         });
 
-        // --- TEAM SYSTEM ---
-        window.createNewTeam = async () => {
-            const name = prompt("Name des Teams:");
-            if (!name) return;
-            const myShortId = auth.currentUser.uid.substring(0, 5);
-            try {
-                await addDoc(collection(db, "teams"), {
-                    name: name,
-                    members: [myShortId],
-                    createdBy: auth.currentUser.uid,
-                    timestamp: serverTimestamp()
-                });
-            } catch (e) { console.error(e); }
+        // --- ROOMS & TEAMS ---
+        window.addTeam = async () => {
+            const n = prompt("Team Name:");
+            if(!n) return;
+            await addDoc(collection(db, "rooms"), { name: n, members: [myShortId], type: "team" });
         };
 
-        window.addMember = async (e, teamId) => {
-            e.stopPropagation();
-            const newMemberId = prompt("ID der Person hinzufügen:");
-            if (!newMemberId) return;
-            try {
-                const teamRef = doc(db, "teams", teamId);
-                await updateDoc(teamRef, { members: arrayUnion(newMemberId) });
-                alert("Hinzugefügt!");
-            } catch (e) { alert("Fehler: " + e.message); }
+        window.invite = async (id) => {
+            const p = prompt("User ID hinzufügen:");
+            if(!p) return;
+            await updateDoc(doc(db, "rooms", id), { members: arrayUnion(p) });
         };
 
-        function loadTeams() {
-            const myShortId = auth.currentUser.uid.substring(0, 5);
-            const q = query(collection(db, "teams"), where("members", "array-contains", myShortId));
-            
-            onSnapshot(q, (snap) => {
-                const list = document.getElementById('team-list-container');
-                list.innerHTML = `<div class="team-item ${activeRoom === 'Hauptraum' ? 'active-room' : ''}" id="item-Hauptraum" onclick="switchRoom('Hauptraum')">📢 Hauptraum (Alle)</div>`;
-                snap.forEach(doc => {
-                    const team = doc.data();
-                    const isSelected = activeRoom === doc.id ? 'active-room' : '';
-                    list.innerHTML += `
-                        <div class="team-item ${isSelected}" id="item-${doc.id}" onclick="switchRoom('${doc.id}', '${team.name}')">
-                            <span>👥 ${team.name}</span>
-                            <button class="add-member-btn" onclick="addMember(event, '${doc.id}')">+</button>
+        window.setRoom = (id) => {
+            activeRoom = id;
+            document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('room-' + id) || document.querySelector('.room-item');
+            if(target) target.classList.add('active');
+            syncMessages();
+        };
+
+        function syncRooms() {
+            onSnapshot(collection(db, "rooms"), (snap) => {
+                const cont = document.getElementById('rooms-container');
+                cont.innerHTML = `<div class="room-item ${activeRoom==='global'?'active':''}" onclick="setRoom('global')">📢 Hauptraum</div>`;
+                snap.forEach(d => {
+                    const r = d.data();
+                    if(r.members.includes(myShortId)) {
+                        cont.innerHTML += `<div class="room-item ${activeRoom===d.id?'active':''}" id="room-${d.id}" onclick="setRoom('${d.id}')">
+                            👥 ${r.name} <span onclick="invite('${d.id}')" style="color:var(--primary)">+</span>
                         </div>`;
+                    }
                 });
             });
         }
 
-        // --- CHAT SYSTEM ---
-        window.switchRoom = (roomId, displayName = "Hauptraum") => {
-            activeRoom = roomId;
-            document.getElementById('current-room-title').innerText = displayName;
-            document.querySelectorAll('.team-item').forEach(el => el.classList.remove('active-room'));
-            const activeEl = document.getElementById('item-' + roomId);
-            if(activeEl) activeEl.classList.add('active-room');
-            loadChat(roomId);
-        };
-
-        function loadChat(room) {
-            if (unsubscribeChat) unsubscribeChat();
-            const q = query(collection(db, "messages"), where("room", "==", room), orderBy("timestamp", "asc"));
-            
-            unsubscribeChat = onSnapshot(q, (snap) => {
-                const box = document.getElementById('chat-messages');
+        // --- CHAT LOGIK ---
+        function syncMessages() {
+            const q = query(collection(db, "msgs"), orderBy("time", "asc"));
+            onSnapshot(q, (snap) => {
+                const box = document.getElementById('messages');
                 box.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const div = document.createElement('div');
-                    div.className = `msg ${d.uid === auth.currentUser.uid ? 'sent' : 'received'}`;
-                    div.innerHTML = `<span class="user-tag">${d.user}</span>${d.text}`;
-                    box.appendChild(div);
+                snap.forEach(d => {
+                    const m = d.data();
+                    if(m.room === activeRoom) {
+                        const div = document.createElement('div');
+                        div.className = `msg ${m.uid === auth.currentUser.uid ? 'sent' : 'received'}`;
+                        div.innerHTML = `<small style="display:block;opacity:0.5;font-size:9px">${m.user}</small>${m.text}`;
+                        box.appendChild(div);
+                    }
                 });
                 box.scrollTop = box.scrollHeight;
-            }, (err) => console.log("Index fehlt wohl noch..."));
+            });
         }
 
         window.sendMsg = async () => {
-            const inp = document.getElementById('msgInput');
-            if (!inp.value.trim() || !auth.currentUser) return;
-            await addDoc(collection(db, "messages"), {
-                text: inp.value,
+            const i = document.getElementById('mInp');
+            if(!i.value.trim()) return;
+            await addDoc(collection(db, "msgs"), {
+                text: i.value,
+                room: activeRoom,
                 user: auth.currentUser.email.split('@')[0],
                 uid: auth.currentUser.uid,
-                room: activeRoom,
-                timestamp: serverTimestamp()
+                time: serverTimestamp()
             });
-            inp.value = "";
+            i.value = "";
         };
 
-        // --- VIDEO SYSTEM ---
+        // --- VIDEO ---
         function initPeer(id) {
             peer = new Peer(id);
-            peer.on('call', async call => {
-                if (confirm("Anruf von " + call.peer + " annehmen?")) {
+            peer.on('call', async c => {
+                if(confirm("Anruf annehmen?")) {
                     localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-                    document.getElementById('localVideo').srcObject = localStream;
-                    document.getElementById('controls').style.display = 'flex';
-                    call.answer(localStream);
-                    call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
+                    document.getElementById('localVid').srcObject = localStream;
+                    c.answer(localStream);
+                    c.on('stream', s => document.getElementById('remoteVid').srcObject = s);
                 }
             });
         }
 
-        window.makeCall = async () => {
-            const tid = prompt("Ziel-ID eingeben:");
-            if(!tid) return;
+        window.callUser = async () => {
+            const id = prompt("Partner ID:");
+            if(!id) return;
             localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-            document.getElementById('localVideo').srcObject = localStream;
-            document.getElementById('controls').style.display = 'flex';
-            const call = peer.call(tid, localStream);
-            call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
+            document.getElementById('localVid').srcObject = localStream;
+            const c = peer.call(id, localStream);
+            c.on('stream', s => document.getElementById('remoteVid').srcObject = s);
         };
 
-        window.toggleMute = () => {
-            const track = localStream.getAudioTracks()[0];
-            track.enabled = !track.enabled;
-            document.getElementById('btn-mute').classList.toggle('btn-off', !track.enabled);
+        window.toggleTrack = (type) => {
+            const t = type === 'video' ? localStream.getVideoTracks()[0] : localStream.getAudioTracks()[0];
+            t.enabled = !t.enabled;
         };
 
-        window.toggleCam = () => {
-            const track = localStream.getVideoTracks()[0];
-            track.enabled = !track.enabled;
-            document.getElementById('btn-cam').classList.toggle('btn-off', !track.enabled);
-        };
-
-        document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') sendMsg(); };
+        document.getElementById('mInp').onkeypress = (e) => { if(e.key==='Enter') sendMsg(); };
     </script>
 </body>
 </html>
